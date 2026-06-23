@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>精准田径俱乐部 · 学员查询</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg-primary:#0f1117;--bg-card:#222639;--bg-input:#191c28;--border:#2e3348;--text-primary:#eef0f6;--text-secondary:#8b90a5;--text-muted:#5c6080;--accent-orange:#f97316;--accent-orange-dim:rgba(249,115,22,0.15);--accent-blue:#3b82f6;--accent-green:#22c55e;--accent-red:#ef4444;--accent-yellow:#eab308;--accent-purple:#a855f7;--radius:14px;--radius-sm:9px;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+.header{background:linear-gradient(160deg,#1a1d27 0%,#222639 100%);border-bottom:1px solid var(--border);padding:36px 20px 48px;text-align:center;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 0%,rgba(249,115,22,0.12) 0%,transparent 70%);}
+.header-content{position:relative;z-index:1;}
+.header-icon{font-size:3rem;margin-bottom:10px;}
+.header-club{font-size:1.35rem;font-weight:800;color:var(--accent-orange);letter-spacing:1px;}
+.header-sub{font-size:0.82rem;color:var(--text-muted);margin-top:5px;letter-spacing:2px;}
+.search-wrap{max-width:480px;margin:-28px auto 0;padding:0 16px;position:relative;z-index:10;}
+.search-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.search-card label{display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:10px;}
+.search-row{display:flex;gap:8px;}
+.search-input{flex:1;padding:13px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:1rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+.search-input:focus{border-color:var(--accent-orange);}
+.search-input::placeholder{color:var(--text-muted);}
+.search-btn{padding:13px 22px;background:var(--accent-orange);color:#fff;border:none;border-radius:var(--radius-sm);font-size:1rem;font-weight:700;cursor:pointer;transition:background 0.2s;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.search-btn:active{background:#dc6409;}
+.search-hint{font-size:0.74rem;color:var(--text-muted);margin-top:10px;text-align:center;}
+.results{max-width:480px;margin:24px auto 60px;padding:0 16px;}
+.result-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.card-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.card-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.3rem;flex-shrink:0;background:var(--accent-orange-dim);color:var(--accent-orange);}
+.card-name{font-size:1.2rem;font-weight:700;}
+.card-event{font-size:0.8rem;color:var(--text-muted);margin-top:3px;}
+.status-badge{margin-left:auto;padding:5px 14px;border-radius:20px;font-size:0.82rem;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.status-active{background:rgba(34,197,94,0.12);color:#22c55e;}.status-active .dot{background:#22c55e;}
+.status-expiring{background:rgba(234,179,8,0.12);color:#eab308;}.status-expiring .dot{background:#eab308;}
+.status-expired{background:rgba(239,68,68,0.12);color:#ef4444;}.status-expired .dot{background:#ef4444;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.info-item{background:var(--bg-input);border-radius:var(--radius-sm);padding:13px;}
+.info-label{font-size:0.72rem;color:var(--text-muted);font-weight:500;}
+.info-value{font-size:1.05rem;font-weight:700;margin-top:5px;}
+.info-value.c-orange{color:var(--accent-orange);}.info-value.c-blue{color:var(--accent-blue);}.info-value.c-green{color:var(--accent-green);}.info-value.c-red{color:var(--accent-red);}.info-value.c-yellow{color:var(--accent-yellow);}.info-value.c-purple{color:var(--accent-purple);}
+.section-title{font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.section-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent-orange);border-radius:2px;}
+.pay-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--bg-input);border-radius:var(--radius-sm);margin-bottom:8px;}
+.pay-left{}.pay-amount{font-size:1.05rem;font-weight:700;color:var(--accent-orange);}.pay-meta{font-size:0.74rem;color:var(--text-muted);margin-top:3px;}
+.pay-right{text-align:right;}.pay-days{font-weight:600;color:var(--accent-blue);font-size:0.85rem;}.pay-daily{font-size:0.72rem;color:var(--text-muted);}
+.leave-info{background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:var(--accent-purple);}
+.empty-result{text-align:center;padding:48px 20px;color:var(--text-muted);}.empty-result .icon{font-size:3rem;margin-bottom:12px;opacity:0.5;}.empty-result p{font-size:0.92rem;}.empty-result .hint{font-size:0.8rem;margin-top:8px;}
+.footer{text-align:center;padding:20px;font-size:0.75rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:20px;}
+.update-time{text-align:center;font-size:0.72rem;color:var(--text-muted);margin:8px auto 0;padding:0 16px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-content">
+    <div class="header-icon">🏃</div>
+    <div class="header-club">精准田径俱乐部</div>
+    <div class="header-sub">学员缴费查询</div>
+  </div>
+</div>
+
+<div class="search-wrap">
+  <div class="search-card">
+    <label>输入你的姓名查询缴费信息</label>
+    <div class="search-row">
+      <input type="text" class="search-input" id="nameInput" placeholder="请输入姓名..." autocomplete="off">
+      <button class="search-btn" onclick="doSearch()">查询</button>
+    </div>
+    <div class="search-hint">查询你的训练有效期、请假记录和缴费详情</div>
+  </div>
+</div>
+
+<div class="results" id="results"></div>
+
+<div class="footer">精准田径俱乐部 · 学员缴费查询系统</div>
+
+<script>
+var PUB_DATA = null;
+
+// Load data from URL hash (base64 encoded JSON)
+function loadData() {
+  try {
+    var hash = location.hash.slice(1);
+    if (hash) {
+      var json = decodeURIComponent(escape(atob(hash)));
+      PUB_DATA = JSON.parse(json);
+    }
+  } catch(e) {
+    console.error('数据解析失败', e);
+  }
+}
+
+function daysBetween(d1, d2) {
+  return Math.ceil((new Date(d2) - new Date(d1)) / 86400000);
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function esc(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function doSearch() {
+  var q = (document.getElementById('nameInput').value || '').trim();
+  if (!q) {
+    showEmpty('请输入姓名');
+    return;
+  }
+  if (!PUB_DATA) {
+    showEmpty('数据未加载，请让教练重新分享最新链接');
+    return;
+  }
+
+  // Fuzzy match
+  var matches = PUB_DATA.students.filter(function(s) {
+    return s.name === q || s.name.indexOf(q) >= 0 || q.indexOf(s.name) >= 0;
+  });
+
+  var container = document.getElementById('results');
+  if (matches.length === 0) {
+    container.innerHTML = '<div class="empty-result"><div class="icon">🔍</div><p>未找到该学员</p><div class="hint">请检查姓名是否输入正确，或联系教练确认是否已录入</div></div>';
+    return;
+  }
+
+  container.innerHTML = matches.map(function(s) {
+    var stClass = 'status-' + s.status;
+    var stText = {active:'有效', expiring:'即将到期', expired:'已过期', none:'未缴费'}[s.status] || '未知';
+    var daysText = s.daysLeft < 0 ? '已过期' + Math.abs(s.daysLeft) + '天' : (s.daysLeft <= 7 ? '剩' + s.daysLeft + '天' : s.daysLeft + '天');
+    var avatarLetter = s.name.charAt(s.name.length - 1);
+    var leaveHTML = s.leaveTotal > 0 ? '<div class="leave-info">📅 累计请假 <b>' + s.leaveTotal + '</b> 天，到期日已相应顺延</div>' : '';
+
+    var payHTML = (s.payments || []).map(function(p) {
+      var leaveInfo = p.leaveDays > 0 ? '<div style="font-size:0.72rem;color:var(--accent-purple);margin-top:2px;">请假' + p.leaveDays + '天 → 实际到期：' + esc(p.actualExpiry || '') + '</div>' : '';
+      return '<div class="pay-item"><div class="pay-left"><div class="pay-amount">¥' + (p.amount || 0).toLocaleString() + '</div><div class="pay-meta">' + esc(p.date || '') + ' · 训练' + p.days + '天</div>' + leaveInfo + '</div><div class="pay-right"><div class="pay-days">' + esc(p.note || '') + '</div></div></div>';
+    }).join('');
+
+    return '<div class="result-card"><div class="card-header"><div class="card-avatar">' + esc(avatarLetter) + '</div><div><div class="card-name">' + esc(s.name) + '</div><div class="card-event">' + (s.event || '') + '</div></div><div class="status-badge ' + stClass + '"><span class="dot"></span>' + stText + '</div></div>' + leaveHTML + '<div class="info-grid"><div class="info-item"><div class="info-label">实际到期日</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-green') + '">' + esc(s.actualExpiry || '-') + '</div></div><div class="info-item"><div class="info-label">剩余/过期天数</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-blue') + '">' + daysText + '</div></div><div class="info-item"><div class="info-label">请假总天数</div><div class="info-value c-purple">' + (s.leaveTotal || 0) + ' 天</div></div><div class="info-item"><div class="info-label">数据更新时间</div><div class="info-value" style="font-size:0.85rem;color:var(--text-muted);">' + (PUB_DATA.updateTime || '-') + '</div></div></div><div class="section-title">缴费记录</div><div class="payment-history">' + payHTML + '</div></div>';
+  }).join('');
+}
+
+function showEmpty(msg) {
+  document.getElementById('results').innerHTML = '<div class="empty-result"><div class="icon">📋</div><p>' + esc(msg) + '</p></div>';
+}
+
+// Allow Enter key to search
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  document.getElementById('nameInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') doSearch();
+  });
+  // Show update time
+  if (PUB_DATA && PUB_DATA.updateTime) {
+    var d = document.createElement('div');
+    d.className = 'update-time';
+    d.textContent = '数据更新时间：' + PUB_DATA.updateTime;
+    document.querySelector('.footer').before(d);
+  }
+});
+</script>
+</body>
+</html>
