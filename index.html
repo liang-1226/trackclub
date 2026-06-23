@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>精准田径俱乐部 · 学员缴费提醒平台</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0f1117; --bg-secondary: #1a1d27; --bg-card: #222639;
+  --bg-card-hover: #2a2f45; --bg-input: #191c28; --border: #2e3348;
+  --border-focus: #f97316; --text-primary: #eef0f6; --text-secondary: #8b90a5;
+  --text-muted: #5c6080; --accent-orange: #f97316; --accent-orange-dim: rgba(249,115,22,0.15);
+  --accent-blue: #3b82f6; --accent-blue-dim: rgba(59,130,246,0.15);
+  --accent-green: #22c55e; --accent-green-dim: rgba(34,197,94,0.12);
+  --accent-red: #ef4444; --accent-red-dim: rgba(239,68,68,0.12);
+  --accent-yellow: #eab308; --accent-yellow-dim: rgba(234,179,8,0.12);
+  --accent-purple: #a855f7; --accent-purple-dim: rgba(168,85,247,0.12);
+  --radius: 10px; --radius-sm: 6px; --shadow: 0 4px 24px rgba(0,0,0,0.35);
+}
+html { font-size: 15px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: transform 0.3s;
+}
+.sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+.sidebar-brand h1 { font-size: 1.15rem; font-weight: 700; color: var(--accent-orange); letter-spacing: 0.5px; }
+.sidebar-brand p { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; letter-spacing: 1px; }
+.sidebar-nav { flex: 1; padding: 12px 10px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; transition: all 0.2s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-item.active { background: var(--accent-orange-dim); color: var(--accent-orange); }
+.nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+.nav-badge { margin-left: auto; background: var(--accent-red); color: #fff; font-size: 0.7rem; padding: 1px 7px; border-radius: 10px; font-weight: 600; }
+.nav-section-label { font-size: 0.7rem; color: var(--text-muted); padding: 16px 14px 6px; text-transform: uppercase; letter-spacing: 1px; }
+.main { margin-left: 250px; flex: 1; padding: 28px 32px; min-width: 0; }
+
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+.page-header h2 { font-size: 1.5rem; font-weight: 700; }
+.page-header-sub { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent-orange); color: #fff; } .btn-primary:hover { background: #ea6c10; }
+.btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); } .btn-secondary:hover { border-color: var(--text-muted); }
+.btn-danger { background: var(--accent-red-dim); color: var(--accent-red); } .btn-danger:hover { background: var(--accent-red); color: #fff; }
+.btn-blue { background: var(--accent-blue); color: #fff; } .btn-blue:hover { background: #2563eb; }
+.btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+.btn-orange-outline { background: transparent; color: var(--accent-orange); border: 1px solid var(--accent-orange); } .btn-orange-outline:hover { background: var(--accent-orange-dim); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; }
+.stat-card.orange::before { background: var(--accent-orange); }
+.stat-card.blue::before { background: var(--accent-blue); }
+.stat-card.green::before { background: var(--accent-green); }
+.stat-card.red::before { background: var(--accent-red); }
+.stat-card.yellow::before { background: var(--accent-yellow); }
+.stat-card.purple::before { background: var(--accent-purple); }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+.stat-value { font-size: 1.8rem; font-weight: 800; margin: 6px 0 2px; }
+.stat-value.orange { color: var(--accent-orange); } .stat-value.blue { color: var(--accent-blue); } .stat-value.green { color: var(--accent-green); } .stat-value.red { color: var(--accent-red); } .stat-value.yellow { color: var(--accent-yellow); } .stat-value.purple { color: var(--accent-purple); }
+.stat-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+.table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.table-toolbar { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.table-search { flex: 1; max-width: 300px; padding: 8px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; outline: none; }
+.table-search:focus { border-color: var(--accent-orange); }
+.filter-group { display: flex; gap: 6px; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); transition: all 0.2s; }
+.filter-btn.active, .filter-btn:hover { background: var(--accent-orange-dim); color: var(--accent-orange); border-color: var(--accent-orange); }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 12px 16px; text-align: left; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.15); }
+tbody td { padding: 13px 16px; font-size: 0.88rem; border-bottom: 1px solid rgba(46,51,72,0.5); }
+tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg-card-hover); }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-active { color: var(--accent-green); } .status-expiring { color: var(--accent-yellow); } .status-expired { color: var(--accent-red); } .status-none { color: var(--text-muted); }
+.action-btns { display: flex; gap: 4px; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 14px; border-top: 1px solid var(--border); }
+
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 500; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+.modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+.modal-close:hover { background: var(--bg-card); color: var(--text-primary); }
+.modal-body { padding: 20px 24px; } .modal-footer { padding: 16px 24px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.form-input, .form-select {
+  width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent-orange); }
+.form-select { cursor: pointer; }
+.form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 5px; }
+.leave-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; background: var(--accent-purple-dim); color: var(--accent-purple); }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+.chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 22px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; animation: toastIn 0.3s ease; box-shadow: var(--shadow); }
+.toast-success { background: var(--accent-green); color: #fff; } .toast-error { background: var(--accent-red); color: #fff; } .toast-info { background: var(--accent-blue); color: #fff; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+.tab-nav { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tab-btn { padding: 10px 20px; font-size: 0.88rem; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s; }
+.tab-btn.active { color: var(--accent-orange); border-bottom-color: var(--accent-orange); }
+
+.share-link-box { display: flex; gap: 8px; margin-top: 10px; }
+.share-link-input { flex: 1; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.82rem; }
+
+.mobile-header { display: none; padding: 14px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); align-items: center; justify-content: space-between; }
+.menu-toggle { background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; }
+.sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+.sidebar-overlay.open { display: block; }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 16px; }
+  .mobile-header { display: flex; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .table-wrap { overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-header">
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  <span style="font-weight:700;color:var(--accent-orange);">精准田径俱乐部</span>
+  <span></span>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h1>🏃 精准田径俱乐部</h1>
+      <p>学员缴费提醒平台</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        统计看板
+      </div>
+      <div class="nav-item" data-page="students" onclick="switchPage('students')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        学员管理
+      </div>
+      <div class="nav-item" data-page="payments" onclick="switchPage('payments')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        缴费记录
+      </div>
+      <div class="nav-item" data-page="remind" onclick="switchPage('remind')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        到期提醒
+        <span class="nav-badge" id="remindBadge">0</span>
+      </div>
+      <div class="nav-section-label">数据管理</div>
+      <div class="nav-item" data-page="data" onclick="switchPage('data')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导入 / 导出
+      </div>
+      <div class="nav-item" onclick="openShareModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        发布给学生
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <!-- 统计看板 -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div><h2>统计看板</h2><div class="page-header-sub">数据概览与缴费分析</div></div>
+        <div class="header-actions"><button class="btn btn-secondary" onclick="refreshData()">🔄 刷新</button></div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="charts-grid">
+        <div class="chart-card"><h4>会员状态分布</h4><div style="display:flex;align-items:center;gap:24px;padding-top:12px;"><canvas id="donutCanvas" width="160" height="160"></canvas><div id="donutLegend"></div></div></div>
+        <div class="chart-card"><h4>近6个月缴费趋势</h4><div id="barChart" style="display:flex;align-items:flex-end;gap:8px;height:180px;padding-top:20px;"></div></div>
+      </div>
+    </div>
+
+    <!-- 学员管理 -->
+    <div class="page" id="page-students" style="display:none;">
+      <div class="page-header">
+        <div><h2>学员管理</h2><div class="page-header-sub">管理所有学员信息</div></div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="exportStudentsExcel()">📥 导出Excel</button>
+          <button class="btn btn-primary" onclick="openStudentModal()">＋ 新增学员</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input type="text" class="table-search" placeholder="搜索学员姓名..." id="studentSearch" oninput="renderStudents()">
+          <div class="filter-group">
+            <button class="filter-btn active" onclick="filterStudents('all',this)">全部</button>
+            <button class="filter-btn" onclick="filterStudents('active',this)">有效</button>
+            <button class="filter-btn" onclick="filterStudents('expiring',this)">即将到期</button>
+            <button class="filter-btn" onclick="filterStudents('expired',this)">已过期</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>姓名</th><th>手机</th><th>项目</th><th>状态</th><th>实际到期日</th><th>请假天数</th><th>操作</th></tr></thead>
+            <tbody id="studentsBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="studentsPagination"></div>
+      </div>
+    </div>
+
+    <!-- 缴费记录 -->
+    <div class="page" id="page-payments" style="display:none;">
+      <div class="page-header">
+        <div><h2>缴费记录</h2><div class="page-header-sub">所有缴费明细</div></div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="exportPaymentsExcel()">📥 导出Excel</button>
+          <button class="btn btn-primary" onclick="openPaymentModal()">＋ 新增缴费</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input type="text" class="table-search" placeholder="搜索学员姓名..." id="paymentSearch" oninput="renderPayments()">
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>学员</th><th>金额</th><th>缴费日期</th><th>训练天数</th><th>请假天数</th><th>实际到期日</th><th>日均</th><th>备注</th><th>操作</th></tr></thead>
+            <tbody id="paymentsBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="paymentsPagination"></div>
+      </div>
+    </div>
+
+    <!-- 到期提醒 -->
+    <div class="page" id="page-remind" style="display:none;">
+      <div class="page-header">
+        <div><h2>到期提醒</h2><div class="page-header-sub">需要及时续费的学员</div></div>
+      </div>
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="renderRemind('expiring',this)">即将到期（7天内）</button>
+        <button class="tab-btn" onclick="renderRemind('expired',this)">已过期</button>
+      </div>
+      <div id="remindContent"></div>
+    </div>
+
+    <!-- 数据管理 -->
+    <div class="page" id="page-data" style="display:none;">
+      <div class="page-header">
+        <div><h2>数据管理</h2><div class="page-header-sub">导入 / 导出 / 备份</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="chart-card">
+          <h4 style="margin-bottom:16px;">📥 从 Excel 导入</h4>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">支持 .xlsx / .xls / .csv（WPS Office 导出文件）</p>
+          <div style="font-size:0.78rem;color:var(--text-secondary);background:var(--bg-input);padding:12px;border-radius:var(--radius-sm);margin-bottom:14px;line-height:1.8;">
+            <b>支持的列名：</b><br>
+            姓名、手机、手机号、联系电话<br>
+            金额、缴费金额、交费金额<br>
+            开始日期、缴费日期、交费日期<br>
+            结束日期、到期日期、有效期至<br>
+            训练天数、天数<br>
+            <b style="color:var(--accent-purple);">请假天数、请假</b>（新增）<br>
+            项目、训练项目、备注
+          </div>
+          <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleExcelImport(event)">
+          <button class="btn btn-primary" onclick="document.getElementById('excelFileInput').click()">选择 Excel 文件</button>
+        </div>
+        <div class="chart-card">
+          <h4 style="margin-bottom:16px;">📤 导出数据</h4>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">导出为 Excel 或 JSON 备份文件</p>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button class="btn btn-secondary" onclick="exportStudentsExcel()" style="justify-content:flex-start;">📋 导出学员列表 (.xlsx)</button>
+            <button class="btn btn-secondary" onclick="exportPaymentsExcel()" style="justify-content:flex-start;">💰 导出缴费记录 (.xlsx)</button>
+            <button class="btn btn-secondary" onclick="exportFullExcel()" style="justify-content:flex-start;">📊 导出完整数据 (.xlsx)</button>
+            <button class="btn btn-secondary" onclick="backupJSON()" style="justify-content:flex-start;">💾 备份 JSON 文件</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 学员弹窗 -->
+<div class="modal-overlay" id="studentModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="studentModalTitle">新增学员</h3><button class="modal-close" onclick="closeModal('studentModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">姓名 *</label><input class="form-input" id="sName" placeholder="学员姓名"></div>
+        <div class="form-group"><label class="form-label">手机号</label><input class="form-input" id="sPhone" placeholder="联系电话"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">训练项目</label>
+          <select class="form-select" id="sEvent"><option value="">请选择</option><option>短跑</option><option>中长跑</option><option>跳远</option><option>跳高</option><option>铅球</option><option>全能</option><option>体能训练</option><option>其他</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">备注</label><input class="form-input" id="sNote" placeholder="可选备注"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('studentModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveStudent()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 缴费弹窗 -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="paymentModalTitle">新增缴费</h3><button class="modal-close" onclick="closeModal('paymentModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">学员 *</label><select class="form-select" id="pStudentId"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">缴费金额（元）*</label><input class="form-input" id="pAmount" type="number" placeholder="0" oninput="updateDailyCalc()"></div>
+        <div class="form-group"><label class="form-label">缴费日期 *</label><input class="form-input" id="pDate" type="date"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">训练时长</label>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="flex:1;">
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <button type="button" class="filter-btn active" id="durationDayBtn" onclick="switchDurationMode('day',this)" style="font-size:0.78rem;">按天数</button>
+              <button type="button" class="filter-btn" id="durationMonthBtn" onclick="switchDurationMode('month',this)" style="font-size:0.78rem;">按月份</button>
+            </div>
+            <div id="durationDayPanel">
+              <input class="form-input" id="pDays" type="number" placeholder="输入训练天数" oninput="updateDailyCalc();updateExpiryPreview()">
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                <button type="button" class="filter-btn" onclick="setDays(10,this)">10天</button>
+                <button type="button" class="filter-btn" onclick="setDays(15,this)">15天</button>
+                <button type="button" class="filter-btn" onclick="setDays(20,this)">20天</button>
+                <button type="button" class="filter-btn" onclick="setDays(30,this)">30天</button>
+                <button type="button" class="filter-btn" onclick="setDays(60,this)">60天</button>
+                <button type="button" class="filter-btn" onclick="setDays(90,this)">90天</button>
+                <button type="button" class="filter-btn" onclick="setDays(180,this)">半年</button>
+                <button type="button" class="filter-btn" onclick="setDays(365,this)">一年</button>
+              </div>
+            </div>
+            <div id="durationMonthPanel" style="display:none;">
+              <select class="form-select" id="pMonths" onchange="monthsToDays();updateDailyCalc();updateExpiryPreview()">
+                <option value="">选择月份</option>
+                <option value="1">1个月</option><option value="2">2个月</option>
+                <option value="3">3个月</option><option value="6">6个月</option>
+                <option value="12">12个月</option><option value="24">24个月</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">请假天数</label>
+        <input class="form-input" id="pLeaveDays" type="number" placeholder="请输入请假天数（无请假填0）" value="0" oninput="updateExpiryPreview()">
+        <div class="form-hint">学员请假期间不扣训练天数，到期日将顺延相应天数</div>
+      </div>
+      <div id="expiryPreview" style="background:var(--bg-input);padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;font-size:0.85rem;display:none;">
+        <div style="color:var(--text-muted);margin-bottom:6px;">到期日预览</div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <div>原到期日：<b id="epOriginal" style="color:var(--accent-blue);">—</b></div>
+          <div>请假天数：<b id="epLeave" style="color:var(--accent-purple);">0</b> 天</div>
+          <div>实际到期日：<b id="epActual" style="color:var(--accent-green);">—</b></div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">日均费用</label><div id="dailyCost" style="font-size:1.1rem;font-weight:700;color:var(--accent-orange);">¥0 / 天</div></div>
+      <div class="form-group"><label class="form-label">备注</label><input class="form-input" id="pNote" placeholder="可选备注"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('paymentModal')">取消</button>
+      <button class="btn btn-primary" onclick="savePayment()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 发布弹窗 -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header"><h3>发布给学生查询</h3><button class="modal-close" onclick="closeModal('shareModal')">×</button></div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">生成一个查询页面，学生打开后输入姓名即可查看自己的缴费状态和到期时间</p>
+      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
+        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">步骤一：生成并下载查询页面</div>
+        <button class="btn btn-primary" onclick="generateStudentPage()" style="margin-bottom:8px;">📄 生成查询页面</button>
+        <div id="downloadArea" style="display:none;"><a id="downloadLink" style="color:var(--accent-orange);font-size:0.85rem;text-decoration:underline;">点击下载 query.html</a></div>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
+        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px;">步骤二：分享给学生</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);line-height:1.8;text-align:left;">
+          1. 将下载的 <b>query.html</b> 文件通过微信发给学生<br>
+          2. 学生在手机上用浏览器打开即可查询<br>
+          3. 或上传到任意网页服务器，把链接发到微信群
+        </div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);">数据将打包在页面中，无需服务器即可使用</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
