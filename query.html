@@ -139,7 +139,20 @@ function doSearch() {
       return '<div class="pay-item"><div class="pay-left"><div class="pay-amount">¥' + (p.amount || 0).toLocaleString() + '</div><div class="pay-meta">' + esc(p.date || '') + ' · 训练' + p.days + '天</div>' + leaveInfo + '</div><div class="pay-right"><div class="pay-days">' + esc(p.note || '') + '</div></div></div>';
     }).join('');
 
-    return '<div class="result-card"><div class="card-header"><div class="card-avatar">' + esc(avatarLetter) + '</div><div><div class="card-name">' + esc(s.name) + '</div><div class="card-event">' + (s.event || '') + '</div></div><div class="status-badge ' + stClass + '"><span class="dot"></span>' + stText + '</div></div>' + leaveHTML + '<div class="info-grid"><div class="info-item"><div class="info-label">实际到期日</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-green') + '">' + esc(s.actualExpiry || '-') + '</div></div><div class="info-item"><div class="info-label">剩余/过期天数</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-blue') + '">' + daysText + '</div></div><div class="info-item"><div class="info-label">请假总天数</div><div class="info-value c-purple">' + (s.leaveTotal || 0) + ' 天</div></div><div class="info-item"><div class="info-label">数据更新时间</div><div class="info-value" style="font-size:0.85rem;color:var(--text-muted);">' + (PUB_DATA.updateTime || '-') + '</div></div></div><div class="section-title">缴费记录</div><div class="payment-history">' + payHTML + '</div></div>';
+    // 文化课缴费记录
+    var cultureHTML = '';
+    if (s.culturePayments && s.culturePayments.length > 0) {
+      var culturePayHTML = s.culturePayments.map(function(cp) {
+        var cpStText = {active:'有效', expiring:'即将到期', expired:'已过期', none:'未缴费'}[cp.status] || '';
+        var cpLeaveInfo = cp.leaveDays > 0 ? '<div style="font-size:0.72rem;color:var(--accent-purple);margin-top:2px;">请假' + cp.leaveDays + '天 → 实际到期：' + esc(cp.actualExpiry || '') + '</div>' : '';
+        return '<div class="pay-item"><div class="pay-left"><div class="pay-amount" style="color:var(--accent-yellow);">¥' + (cp.amount || 0).toLocaleString() + '</div><div class="pay-meta">' + esc(cp.subject || '') + ' · ' + esc(cp.date || '') + ' · 课时' + cp.days + '天 · <span style="color:' + (cp.status==='active'?'var(--accent-green)':cp.status==='expiring'?'var(--accent-yellow)':'var(--accent-red)') + '">' + cpStText + '</span></div>' + cpLeaveInfo + '</div><div class="pay-right"><div class="pay-days">' + esc(cp.note || '') + '</div></div></div>';
+      }).join('');
+      cultureHTML = '<div class="section-title" style="margin-top:18px;">📚 文化课缴费</div>' +
+        (s.cultureLeaveTotal > 0 ? '<div class="leave-info" style="background:rgba(234,179,8,0.08);border-color:rgba(234,179,8,0.2);color:var(--accent-yellow);">📅 文化课累计请假 <b>' + s.cultureLeaveTotal + '</b> 天</div>' : '') +
+        '<div class="payment-history">' + culturePayHTML + '</div>';
+    }
+
+    return '<div class="result-card"><div class="card-header"><div class="card-avatar">' + esc(avatarLetter) + '</div><div><div class="card-name">' + esc(s.name) + '</div><div class="card-event">' + (s.event || '') + '</div></div><div class="status-badge ' + stClass + '"><span class="dot"></span>' + stText + '</div></div>' + leaveHTML + '<div class="info-grid"><div class="info-item"><div class="info-label">实际到期日</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-green') + '">' + esc(s.actualExpiry || '-') + '</div></div><div class="info-item"><div class="info-label">剩余/过期天数</div><div class="info-value ' + (s.status==='expired'?'c-red':s.status==='expiring'?'c-yellow':'c-blue') + '">' + daysText + '</div></div><div class="info-item"><div class="info-label">请假总天数</div><div class="info-value c-purple">' + (s.leaveTotal || 0) + ' 天</div></div><div class="info-item"><div class="info-label">数据更新时间</div><div class="info-value" style="font-size:0.85rem;color:var(--text-muted);">' + (PUB_DATA.updateTime || '-') + '</div></div></div><div class="section-title">🏃 训练缴费记录</div><div class="payment-history">' + payHTML + '</div>' + cultureHTML + '</div>';
   }).join('');
 }
 

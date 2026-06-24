@@ -1,17 +1,19 @@
 /* 精准田径俱乐部 - 核心逻辑 */
-const STORAGE_KEY = 'trackclub_data_v4';
-let students = [], payments = [];
-let editingStudentId = null, editingPaymentId = null;
+const STORAGE_KEY = 'trackclub_data_v5';
+let students = [], payments = [], culturePayments = [];
+let editingStudentId = null, editingPaymentId = null, editingCultureId = null;
 let studentFilter = 'all', studentPage = 1, STUDENTS_PER_PAGE = 15;
 let paymentPage = 1, PAYMENTS_PER_PAGE = 15;
+let cultureFilter = 'all', culturePage = 1, CULTURE_PER_PAGE = 15;
 
 // ── 数据存储 ──
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; return; }
+    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || []; return; }
   } catch(e) {}
   // 清除旧版本数据，加载真实学员数据
+  localStorage.removeItem('trackclub_data_v4');
   localStorage.removeItem('trackclub_data_v3');
   localStorage.removeItem('trackclub_data_v2');
   initDemoData();
@@ -82,7 +84,7 @@ function initDemoData() {
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({students, payments}));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({students, payments, culturePayments}));
 }
 
 function today() {
@@ -175,6 +177,7 @@ function switchPage(page) {
   if (page === 'dashboard') renderDashboard();
   if (page === 'students') renderStudents();
   if (page === 'payments') renderPayments();
+  if (page === 'culture') renderCulture();
   if (page === 'remind') renderRemind('expiring', document.querySelector('#page-remind .tab-btn'));
 }
 
@@ -208,16 +211,33 @@ function renderDashboard() {
   payments.forEach(function(p) {
     if (p.date && p.date.startsWith(thisMonth)) monthIncome += p.amount || 0;
   });
+  var cultureMonthIncome = 0;
+  culturePayments.forEach(function(p) {
+    if (p.date && p.date.startsWith(thisMonth)) cultureMonthIncome += p.amount || 0;
+  });
   var totalLeave = 0;
   payments.forEach(function(p) { totalLeave += (p.leaveDays || 0); });
+  var cultureTotalLeave = 0;
+  culturePayments.forEach(function(p) { cultureTotalLeave += (p.leaveDays || 0); });
+  var cultureActive = 0, cultureExpiring = 0, cultureExpired = 0;
+  culturePayments.forEach(function(cp) {
+    var ae = getCultureActualExpiry(cp);
+    if (!ae) return;
+    var diff = daysBetween(today(), ae);
+    if (diff < 0) cultureExpired++;
+    else if (diff <= 7) cultureExpiring++;
+    else cultureActive++;
+  });
 
   var grid = document.getElementById('statsGrid');
   if (grid) grid.innerHTML =
-    '<div class="stat-card orange"><div class="stat-label">学员总数</div><div class="stat-value orange">' + total + '</div><div class="stat-sub">有效 ' + active + ' · 待提醒 ' + expiring + '</div></div>' +
-    '<div class="stat-card green"><div class="stat-label">有效会员</div><div class="stat-value green">' + active + '</div><div class="stat-sub">占比 ' + (total ? Math.round(active/total*100) : 0) + '%</div></div>' +
+    '<div class="stat-card orange"><div class="stat-label">学员总数</div><div class="stat-value orange">' + total + '</div><div class="stat-sub">训练有效 ' + active + ' · 待提醒 ' + expiring + '</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">训练有效会员</div><div class="stat-value green">' + active + '</div><div class="stat-sub">占比 ' + (total ? Math.round(active/total*100) : 0) + '%</div></div>' +
     '<div class="stat-card red"><div class="stat-label">待提醒</div><div class="stat-value red">' + (expiring + expired) + '</div><div class="stat-sub">即将到期 ' + expiring + ' · 已过期 ' + expired + '</div></div>' +
-    '<div class="stat-card blue"><div class="stat-label">本月收入</div><div class="stat-value blue">¥' + monthIncome.toLocaleString() + '</div><div class="stat-sub">' + payments.filter(function(p){return p.date&&p.date.startsWith(thisMonth)}).length + ' 笔缴费</div></div>' +
-    '<div class="stat-card purple"><div class="stat-label">累计请假天数</div><div class="stat-value purple">' + totalLeave + '</div><div class="stat-sub">所有学员请假合计</div></div>';
+    '<div class="stat-card blue"><div class="stat-label">本月训练收入</div><div class="stat-value blue">¥' + monthIncome.toLocaleString() + '</div><div class="stat-sub">' + payments.filter(function(p){return p.date&&p.date.startsWith(thisMonth)}).length + ' 笔缴费</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">训练请假天数</div><div class="stat-value purple">' + totalLeave + '</div><div class="stat-sub">所有学员请假合计</div></div>' +
+    '<div class="stat-card yellow"><div class="stat-label">文化课本月收入</div><div class="stat-value yellow">¥' + cultureMonthIncome.toLocaleString() + '</div><div class="stat-sub">有效 ' + cultureActive + ' · 待续费 ' + cultureExpiring + '</div></div>' +
+    '<div class="stat-card orange"><div class="stat-label">文化课请假天数</div><div class="stat-value orange">' + cultureTotalLeave + '</div><div class="stat-sub">文化课请假合计</div></div>';
 
   renderDonut(active, expiring, expired, total - active - expiring - expired);
   renderBarChart();
@@ -603,6 +623,238 @@ function renderRemind(tab, btn) {
     }).join('') + '</tbody></table></div>';
 }
 
+// ── 文化课缴费 ──
+function getCultureActualExpiry(cp) {
+  if (!cp.expiry) return null;
+  var leave = cp.leaveDays || 0;
+  if (leave <= 0) return cp.expiry;
+  return addDays(cp.expiry, leave);
+}
+
+function getCultureStatus(cp) {
+  var ae = getCultureActualExpiry(cp);
+  if (!ae) return {status:'none', actualExpiry:null, days:999};
+  var diff = daysBetween(today(), ae);
+  if (diff < 0) return {status:'expired', actualExpiry:ae, days:diff};
+  if (diff <= 7) return {status:'expiring', actualExpiry:ae, days:diff};
+  return {status:'active', actualExpiry:ae, days:diff};
+}
+
+function renderCulture() {
+  // 统计卡片
+  var totalCP = culturePayments.length;
+  var cActive = 0, cExpiring = 0, cExpired = 0;
+  var cThisMonth = today().substring(0, 7);
+  var cMonthIncome = 0;
+  culturePayments.forEach(function(cp) {
+    var st = getCultureStatus(cp);
+    if (st.status === 'active') cActive++;
+    else if (st.status === 'expiring') cExpiring++;
+    else if (st.status === 'expired') cExpired++;
+    if (cp.date && cp.date.startsWith(cThisMonth)) cMonthIncome += cp.amount || 0;
+  });
+  var cTotalLeave = culturePayments.reduce(function(sum, cp) { return sum + (cp.leaveDays || 0); }, 0);
+  var cTotalIncome = culturePayments.reduce(function(sum, cp) { return sum + (cp.amount || 0); }, 0);
+
+  var sgrid = document.getElementById('cultureStatsGrid');
+  if (sgrid) sgrid.innerHTML =
+    '<div class="stat-card orange"><div class="stat-label">缴费总条数</div><div class="stat-value orange">' + totalCP + '</div><div class="stat-sub">有效 ' + cActive + ' · 待续费 ' + cExpiring + '</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">有效课程</div><div class="stat-value green">' + cActive + '</div><div class="stat-sub">占比 ' + (totalCP ? Math.round(cActive/totalCP*100) : 0) + '%</div></div>' +
+    '<div class="stat-card blue"><div class="stat-label">本月收入</div><div class="stat-value blue">¥' + cMonthIncome.toLocaleString() + '</div><div class="stat-sub">累计 ¥' + cTotalIncome.toLocaleString() + '</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">请假总课时</div><div class="stat-value purple">' + cTotalLeave + '</div><div class="stat-sub">所有文化课请假合计</div></div>';
+
+  // 表格
+  var q = (document.getElementById('cultureSearch') || {value:''}).value || '';
+  q = q.trim().toLowerCase();
+  var list = culturePayments.filter(function(cp) {
+    var s = students.find(function(x) { return x.id === cp.studentId; });
+    if (q && !(s && s.name.toLowerCase().indexOf(q) >= 0)) return false;
+    if (cultureFilter !== 'all') {
+      var st = getCultureStatus(cp);
+      if (cultureFilter === 'active' && st.status !== 'active') return false;
+      if (cultureFilter === 'expiring' && st.status !== 'expiring') return false;
+      if (cultureFilter === 'expired' && st.status !== 'expired') return false;
+    }
+    return true;
+  }).sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+
+  var totalPages = Math.max(1, Math.ceil(list.length / CULTURE_PER_PAGE));
+  if (culturePage > totalPages) culturePage = totalPages;
+  var pageList = list.slice((culturePage - 1) * CULTURE_PER_PAGE, culturePage * CULTURE_PER_PAGE);
+
+  var tbody = document.getElementById('cultureBody');
+  if (!tbody) return;
+  tbody.innerHTML = pageList.map(function(cp) {
+    var s = students.find(function(x) { return x.id === cp.studentId; });
+    var ae = getCultureActualExpiry(cp);
+    var daily = cp.days > 0 ? (cp.amount / cp.days).toFixed(1) : '-';
+    var st = getCultureStatus(cp);
+    var stClass = 'status-' + st.status;
+    var stText = ({active:'有效',expiring:'即将到期',expired:'已过期',none:'未缴费'})[st.status] || '';
+    var leaveInfo = (cp.leaveDays || 0) > 0 ? '<span class="leave-badge">请假' + cp.leaveDays + '天</span>' : '-';
+    return '<tr>' +
+      '<td><b>' + esc(s ? s.name : '（已删）') + '</b></td>' +
+      '<td>' + esc(cp.subject || '-') + '</td>' +
+      '<td style="color:var(--accent-orange);font-weight:700;">¥' + (cp.amount || 0).toLocaleString() + '</td>' +
+      '<td>' + esc(cp.date || '-') + '</td>' +
+      '<td>' + (cp.days || '-') + '天</td>' +
+      '<td>' + leaveInfo + '</td>' +
+      '<td><b>' + esc(ae || '-') + '</b>' + (cp.leaveDays > 0 ? '<br><span style="font-size:0.75rem;color:var(--text-muted);">原：' + esc(cp.expiry || '-') + '</span>' : '') + '</td>' +
+      '<td>' + (daily !== '-' ? '¥' + daily : '-') + '</td>' +
+      '<td><span class="' + stClass + '"><span class="status-dot" style="background:' + (st.status==='active'?'var(--accent-green)':st.status==='expiring'?'var(--accent-yellow)':'var(--accent-red)') + '"></span>' + stText + '</span></td>' +
+      '<td><div class="action-btns">' +
+        '<button class="btn btn-sm btn-secondary" onclick="openCultureModal(\'' + cp.id + '\')">编辑</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="deleteCulture(\'' + cp.id + '\')">删除</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  renderPagination('culturePagination', totalPages, culturePage, function(n) { culturePage = n; renderCulture(); });
+}
+
+function filterCulture(f, btn) {
+  cultureFilter = f;
+  culturePage = 1;
+  document.querySelectorAll('#page-culture .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderCulture();
+}
+
+function openCultureModal(id) {
+  editingCultureId = id || null;
+  var title = document.getElementById('cultureModalTitle');
+  if (title) title.textContent = id ? '编辑文化课缴费' : '新增文化课缴费';
+  var sel = document.getElementById('cStudentId');
+  if (sel) sel.innerHTML = students.map(function(s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+  if (id) {
+    var cp = culturePayments.find(function(x) { return x.id === id; });
+    if (cp) {
+      if (sel) sel.value = cp.studentId;
+      document.getElementById('cSubject').value = cp.subject || '';
+      document.getElementById('cAmount').value = cp.amount;
+      document.getElementById('cDate').value = cp.date;
+      document.getElementById('cDays').value = cp.days || '';
+      document.getElementById('cLeaveDays').value = cp.leaveDays || 0;
+      document.getElementById('cNote').value = cp.note || '';
+      document.getElementById('cMonths').value = '';
+    }
+  } else {
+    document.getElementById('cSubject').value = '';
+    document.getElementById('cAmount').value = '';
+    document.getElementById('cDate').value = today();
+    document.getElementById('cDays').value = '';
+    document.getElementById('cLeaveDays').value = 0;
+    document.getElementById('cNote').value = '';
+    document.getElementById('cMonths').value = '';
+  }
+  updateCultureCalc();
+  updateCultureExpiry();
+  openModal('cultureModal');
+}
+
+function switchCultureDuration(mode, btn) {
+  document.getElementById('cDurationDayPanel').style.display = mode === 'day' ? '' : 'none';
+  document.getElementById('cDurationMonthPanel').style.display = mode === 'month' ? '' : 'none';
+  document.getElementById('cDurationDayBtn').classList.toggle('active', mode === 'day');
+  document.getElementById('cDurationMonthBtn').classList.toggle('active', mode === 'month');
+}
+
+function setCultureDays(n, btn) {
+  document.getElementById('cDays').value = n;
+  var btns = document.querySelectorAll('#cDurationDayPanel .filter-btn');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  updateCultureCalc();
+  updateCultureExpiry();
+}
+
+function cultureMonthsToDays() {
+  var m = parseInt(document.getElementById('cMonths').value) || 0;
+  document.getElementById('cDays').value = m * 30;
+  updateCultureCalc();
+  updateCultureExpiry();
+}
+
+function updateCultureCalc() {
+  var amt = parseFloat(document.getElementById('cAmount').value) || 0;
+  var days = parseInt(document.getElementById('cDays').value) || 0;
+  var el = document.getElementById('cDailyCost');
+  if (el) el.textContent = days > 0 ? ('¥' + (amt / days).toFixed(1) + ' / 天') : '¥0 / 天';
+}
+
+function updateCultureExpiry() {
+  var date = document.getElementById('cDate').value;
+  var days = parseInt(document.getElementById('cDays').value) || 0;
+  var leave = parseInt(document.getElementById('cLeaveDays').value) || 0;
+  var preview = document.getElementById('cExpiryPreview');
+  if (!date || days <= 0) { preview.style.display = 'none'; return; }
+  var original = addDays(date, days);
+  var actual = leave > 0 ? addDays(original, leave) : original;
+  document.getElementById('cepOriginal').textContent = original;
+  document.getElementById('cepLeave').textContent = leave;
+  document.getElementById('cepActual').textContent = actual;
+  preview.style.display = '';
+}
+
+function saveCulture() {
+  var studentId = document.getElementById('cStudentId').value;
+  var subject = (document.getElementById('cSubject').value || '').trim();
+  var amount = parseFloat(document.getElementById('cAmount').value) || 0;
+  var date = document.getElementById('cDate').value;
+  var days = parseInt(document.getElementById('cDays').value) || 0;
+  var leaveDays = parseInt(document.getElementById('cLeaveDays').value) || 0;
+  var note = (document.getElementById('cNote').value || '').trim();
+  if (!studentId || !subject || !amount || !date || !days) { showToast('请填写完整信息（学员、科目、金额、日期、天数）', 'error'); return; }
+  var expiry = addDays(date, days);
+  if (editingCultureId) {
+    var cp = culturePayments.find(function(x) { return x.id === editingCultureId; });
+    cp.studentId = studentId;
+    cp.subject = subject;
+    cp.amount = amount;
+    cp.date = date;
+    cp.days = days;
+    cp.leaveDays = leaveDays;
+    cp.expiry = expiry;
+    cp.note = note;
+  } else {
+    culturePayments.push({
+      id: 'cp' + Date.now(),
+      studentId: studentId,
+      subject: subject,
+      amount: amount,
+      date: date,
+      days: days,
+      leaveDays: leaveDays,
+      expiry: expiry,
+      note: note
+    });
+  }
+  saveData();
+  closeModal('cultureModal');
+  renderCulture();
+  renderDashboard();
+  showToast(editingCultureId ? '文化课缴费已更新' : '文化课缴费已添加');
+}
+
+function deleteCulture(id) {
+  if (!confirm('确定删除该文化课缴费记录？')) return;
+  culturePayments = culturePayments.filter(function(cp) { return cp.id !== id; });
+  saveData();
+  renderCulture();
+  renderDashboard();
+  showToast('文化课缴费已删除');
+}
+
+function exportCultureExcel() {
+  var data = culturePayments.map(function(cp) {
+    var s = students.find(function(x) { return x.id === cp.studentId; });
+    var ae = getCultureActualExpiry(cp);
+    var st = getCultureStatus(cp);
+    return {'学员姓名':s?s.name:'','科目':cp.subject,'缴费金额':cp.amount,'缴费日期':cp.date,'课程天数':cp.days,'请假天数':cp.leaveDays || 0,'原到期日':cp.expiry,'实际到期日':ae || '','状态':({active:'有效',expiring:'即将到期',expired:'已过期',none:'未缴费'})[st.status],'备注':cp.note};
+  });
+  downloadExcel(data, '文化课缴费记录_' + today());
+}
+
 // ── Excel 导入导出 ──
 function handleExcelImport(event) {
   var file = event.target.files[0];
@@ -722,7 +974,12 @@ function exportFullExcel() {
     return {'学员姓名':s?s.name:'','缴费金额':p.amount,'缴费日期':p.date,'训练天数':p.days,'请假天数':p.leaveDays || 0,'原到期日':p.expiry,'实际到期日':getActualExpiry(p),'备注':p.note};
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sData), '学员列表');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pData), '缴费记录');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pData), '训练缴费');
+  var cData = culturePayments.map(function(cp) {
+    var s = students.find(function(x) { return x.id === cp.studentId; });
+    return {'学员姓名':s?s.name:'','科目':cp.subject,'缴费金额':cp.amount,'缴费日期':cp.date,'课程天数':cp.days,'请假天数':cp.leaveDays || 0,'原到期日':cp.expiry,'实际到期日':getCultureActualExpiry(cp),'备注':cp.note};
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cData), '文化课缴费');
   XLSX.writeFile(wb, '精准田径俱乐部_完整数据_' + today() + '.xlsx');
 }
 
@@ -734,7 +991,7 @@ function downloadExcel(data, filename) {
 }
 
 function backupJSON() {
-  var blob = new Blob([JSON.stringify({students:students, payments:payments}, null, 2)], {type:'application/json'});
+  var blob = new Blob([JSON.stringify({students:students, payments:payments, culturePayments:culturePayments}, null, 2)], {type:'application/json'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'trackclub_backup_' + today() + '.json';
@@ -761,7 +1018,22 @@ function generateStudentPage() {
           note: p.note
         };
       });
-      return { name: s.name, event: s.event, status: st.status, actualExpiry: st.actualExpiry, daysLeft: st.days, leaveTotal: leaveTotal, payments: payList };
+      var cultureLeaveTotal = culturePayments.filter(function(cp) { return cp.studentId === s.id; }).reduce(function(sum, cp) { return sum + (cp.leaveDays || 0); }, 0);
+      var culturePayList = culturePayments.filter(function(cp) { return cp.studentId === s.id; }).map(function(cp) {
+        var cst = getCultureStatus(cp);
+        return {
+          subject: cp.subject,
+          amount: cp.amount,
+          date: cp.date,
+          days: cp.days,
+          leaveDays: cp.leaveDays || 0,
+          originalExpiry: cp.expiry,
+          actualExpiry: getCultureActualExpiry(cp),
+          status: cst.status,
+          note: cp.note
+        };
+      });
+      return { name: s.name, event: s.event, status: st.status, actualExpiry: st.actualExpiry, daysLeft: st.days, leaveTotal: leaveTotal, payments: payList, cultureLeaveTotal: cultureLeaveTotal, culturePayments: culturePayList };
     })
   };
   var htmlContent = getStudentPageHTML(pubData);
