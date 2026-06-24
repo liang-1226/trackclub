@@ -640,6 +640,18 @@ function getCultureStatus(cp) {
   return {status:'active', actualExpiry:ae, days:diff};
 }
 
+function renderSubjectTags(subjectStr) {
+  if (!subjectStr) return '<span style="color:var(--text-muted);">-</span>';
+  var parts = subjectStr.split('、');
+  return parts.map(function(sub) {
+    var isScience = ['数学','物理','化学','生物'].indexOf(sub) >= 0;
+    var isLiberal = ['语文','英语','政治','历史','地理'].indexOf(sub) >= 0;
+    var color = isScience ? 'var(--accent-blue)' : isLiberal ? 'var(--accent-yellow)' : 'var(--accent-green)';
+    var bg = isScience ? 'var(--accent-blue-dim)' : isLiberal ? 'var(--accent-yellow-dim)' : 'var(--accent-green-dim)';
+    return '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:600;color:' + color + ';background:' + bg + ';margin:2px 0 2px 0;">' + esc(sub) + '</span>';
+  }).join(' ');
+}
+
 function renderCulture() {
   // 统计卡片
   var totalCP = culturePayments.length;
@@ -694,7 +706,7 @@ function renderCulture() {
     var leaveInfo = (cp.leaveDays || 0) > 0 ? '<span class="leave-badge">请假' + cp.leaveDays + '天</span>' : '-';
     return '<tr>' +
       '<td><b>' + esc(s ? s.name : '（已删）') + '</b></td>' +
-      '<td>' + esc(cp.subject || '-') + '</td>' +
+      '<td>' + renderSubjectTags(cp.subject) + '</td>' +
       '<td style="color:var(--accent-orange);font-weight:700;">¥' + (cp.amount || 0).toLocaleString() + '</td>' +
       '<td>' + esc(cp.date || '-') + '</td>' +
       '<td>' + (cp.days || '-') + '天</td>' +
@@ -720,6 +732,45 @@ function filterCulture(f, btn) {
   renderCulture();
 }
 
+function getSubjectValue() {
+  var checks = document.querySelectorAll('.cSubjectCheck');
+  var selected = [];
+  checks.forEach(function(c) { if (c.checked) selected.push(c.value); });
+  return selected.join('、');
+}
+
+function setSubjectValues(subjectStr) {
+  // Alias for setSubjectChecks
+  setSubjectChecks(subjectStr);
+}
+
+function setSubjectChecks(subjectStr) {
+  var checks = document.querySelectorAll('.cSubjectCheck');
+  checks.forEach(function(c) { c.checked = false; });
+  if (!subjectStr) { onSubjectCheck(); return; }
+  var parts = subjectStr.split('、');
+  checks.forEach(function(c) {
+    if (parts.indexOf(c.value) >= 0) c.checked = true;
+  });
+  onSubjectCheck();
+}
+
+function onSubjectCheck() {
+  var checks = document.querySelectorAll('.cSubjectCheck');
+  var preview = document.getElementById('cSubjectPreview');
+  var selected = [];
+  checks.forEach(function(c) { if (c.checked) selected.push(c.value); });
+  if (preview) {
+    if (selected.length === 0) {
+      preview.textContent = '未选择科目';
+      preview.style.color = 'var(--text-muted)';
+    } else {
+      preview.textContent = '已选：' + selected.join(' + ');
+      preview.style.color = 'var(--accent-yellow)';
+    }
+  }
+}
+
 function openCultureModal(id) {
   editingCultureId = id || null;
   var title = document.getElementById('cultureModalTitle');
@@ -730,7 +781,7 @@ function openCultureModal(id) {
     var cp = culturePayments.find(function(x) { return x.id === id; });
     if (cp) {
       if (sel) sel.value = cp.studentId;
-      document.getElementById('cSubject').value = cp.subject || '';
+      setSubjectChecks(cp.subject || '');
       document.getElementById('cAmount').value = cp.amount;
       document.getElementById('cDate').value = cp.date;
       document.getElementById('cDays').value = cp.days || '';
@@ -739,7 +790,7 @@ function openCultureModal(id) {
       document.getElementById('cMonths').value = '';
     }
   } else {
-    document.getElementById('cSubject').value = '';
+    setSubjectChecks('');
     document.getElementById('cAmount').value = '';
     document.getElementById('cDate').value = today();
     document.getElementById('cDays').value = '';
@@ -798,7 +849,7 @@ function updateCultureExpiry() {
 
 function saveCulture() {
   var studentId = document.getElementById('cStudentId').value;
-  var subject = (document.getElementById('cSubject').value || '').trim();
+  var subject = getSubjectValue();
   var amount = parseFloat(document.getElementById('cAmount').value) || 0;
   var date = document.getElementById('cDate').value;
   var days = parseInt(document.getElementById('cDays').value) || 0;
