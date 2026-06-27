@@ -59,6 +59,7 @@ body {
 .btn-secondary { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); } .btn-secondary:hover { border-color: var(--text-muted); }
 .btn-danger { background: var(--accent-red-dim); color: var(--accent-red); } .btn-danger:hover { background: var(--accent-red); color: #fff; }
 .btn-blue { background: var(--accent-blue); color: #fff; } .btn-blue:hover { background: #2563eb; }
+.btn-green { background: var(--accent-green); color: #fff; } .btn-green:hover { background: #16a34a; }
 .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
 .btn-orange-outline { background: transparent; color: var(--accent-orange); border: 1px solid var(--accent-orange); } .btn-orange-outline:hover { background: var(--accent-orange-dim); }
 
@@ -235,6 +236,7 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
             <button class="filter-btn" onclick="filterStudents('active',this)">有效</button>
             <button class="filter-btn" onclick="filterStudents('expiring',this)">即将到期</button>
             <button class="filter-btn" onclick="filterStudents('expired',this)">已过期</button>
+            <button class="filter-btn" onclick="filterStudents('left',this)" style="border-color:var(--text-muted);">🚫 已离队</button>
           </div>
         </div>
         <div style="overflow-x:auto;">

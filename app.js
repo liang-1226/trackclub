@@ -10,7 +10,10 @@ let cultureFilter = 'all', culturePage = 1, CULTURE_PER_PAGE = 15;
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || []; return; }
+    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || [];
+      // 迁移：给没有 active 字段的学员补上
+      students.forEach(function(s) { if (s.active === undefined) s.active = true; });
+      return; }
   } catch(e) {}
   // 清除旧版本数据，加载真实学员数据
   localStorage.removeItem('trackclub_data_v4');
@@ -21,34 +24,34 @@ function loadData() {
 
 function initDemoData() {
   students = [
-    {id:'stu_1',name:'王宏博',phone:'',event:'田径训练',note:'',createdAt:'2026-06-05'},
-    {id:'stu_2',name:'王宏杰',phone:'',event:'田径训练',note:'',createdAt:'2026-06-09'},
-    {id:'stu_3',name:'张圆晟',phone:'',event:'田径训练',note:'',createdAt:'2026-05-20'},
-    {id:'stu_4',name:'白云升',phone:'',event:'田径训练',note:'',createdAt:'2026-06-01'},
-    {id:'stu_5',name:'王浦瀚',phone:'',event:'田径训练',note:'',createdAt:'2026-04-22'},
-    {id:'stu_6',name:'李佳泽',phone:'',event:'田径训练',note:'',createdAt:'2026-06-16'},
-    {id:'stu_7',name:'范承昊',phone:'',event:'田径训练',note:'',createdAt:'2026-06-12'},
-    {id:'stu_8',name:'于笑唯',phone:'',event:'田径训练',note:'',createdAt:'2026-05-20'},
-    {id:'stu_9',name:'赵森',phone:'',event:'田径训练',note:'',createdAt:'2026-05-27'},
-    {id:'stu_10',name:'马煜博',phone:'',event:'田径训练',note:'',createdAt:'2026-06-01'},
-    {id:'stu_11',name:'胡曦元',phone:'',event:'田径训练',note:'',createdAt:'2026-06-01'},
-    {id:'stu_12',name:'孙嘉诚',phone:'',event:'田径训练',note:'',createdAt:'2026-06-15'},
-    {id:'stu_13',name:'赵则语',phone:'',event:'田径训练',note:'',createdAt:'2026-06-09'},
-    {id:'stu_14',name:'彭帅凯',phone:'',event:'田径训练',note:'',createdAt:'2026-06-02'},
-    {id:'stu_15',name:'邸薪宇',phone:'',event:'田径训练',note:'',createdAt:'2026-06-07'},
-    {id:'stu_16',name:'闫硕',phone:'',event:'田径训练',note:'',createdAt:'2026-06-17'},
-    {id:'stu_17',name:'肖培宇',phone:'',event:'田径训练',note:'',createdAt:'2026-06-02'},
-    {id:'stu_18',name:'成坤',phone:'',event:'田径训练',note:'',createdAt:'2026-05-28'},
-    {id:'stu_19',name:'张智博',phone:'',event:'田径训练',note:'',createdAt:'2026-06-14'},
-    {id:'stu_20',name:'梁弘杰',phone:'',event:'田径训练',note:'',createdAt:'2026-06-06'},
-    {id:'stu_21',name:'郑允祺',phone:'',event:'田径训练',note:'',createdAt:'2026-06-14'},
-    {id:'stu_22',name:'周瑾',phone:'',event:'田径训练',note:'',createdAt:'2026-06-07'},
-    {id:'stu_23',name:'李昊森',phone:'',event:'田径训练',note:'',createdAt:'2026-06-18'},
-    {id:'stu_24',name:'孙浩博',phone:'',event:'田径训练',note:'',createdAt:'2026-06-17'},
-    {id:'stu_25',name:'范金宇',phone:'',event:'田径训练',note:'',createdAt:'2026-05-21'},
-    {id:'stu_26',name:'万子钦',phone:'',event:'田径训练',note:'',createdAt:'2026-06-20'},
-    {id:'stu_27',name:'王境凯',phone:'',event:'田径训练',note:'',createdAt:'2026-06-11'},
-    {id:'stu_28',name:'刘毅扬',phone:'',event:'田径训练',note:'',createdAt:'2026-06-03'}
+    {id:'stu_1',name:'王宏博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-05'},
+    {id:'stu_2',name:'王宏杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-09'},
+    {id:'stu_3',name:'张圆晟',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-20'},
+    {id:'stu_4',name:'白云升',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
+    {id:'stu_5',name:'王浦瀚',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-04-22'},
+    {id:'stu_6',name:'李佳泽',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-16'},
+    {id:'stu_7',name:'范承昊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-12'},
+    {id:'stu_8',name:'于笑唯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-20'},
+    {id:'stu_9',name:'赵森',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-27'},
+    {id:'stu_10',name:'马煜博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
+    {id:'stu_11',name:'胡曦元',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
+    {id:'stu_12',name:'孙嘉诚',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-15'},
+    {id:'stu_13',name:'赵则语',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-09'},
+    {id:'stu_14',name:'彭帅凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-02'},
+    {id:'stu_15',name:'邸薪宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-07'},
+    {id:'stu_16',name:'闫硕',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-17'},
+    {id:'stu_17',name:'肖培宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-02'},
+    {id:'stu_18',name:'成坤',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-28'},
+    {id:'stu_19',name:'张智博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-14'},
+    {id:'stu_20',name:'梁弘杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-06'},
+    {id:'stu_21',name:'郑允祺',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-14'},
+    {id:'stu_22',name:'周瑾',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-07'},
+    {id:'stu_23',name:'李昊森',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-18'},
+    {id:'stu_24',name:'孙浩博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-17'},
+    {id:'stu_25',name:'范金宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-21'},
+    {id:'stu_26',name:'万子钦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-20'},
+    {id:'stu_27',name:'王境凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-11'},
+    {id:'stu_28',name:'刘毅扬',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-03'}
   ];
   payments = [
     {id:'pay_1',studentId:'stu_1',amount:4200,date:'2026-06-05',days:30,leaveDays:0,expiry:'2026-07-05',note:''},
@@ -199,12 +202,13 @@ function closeModal(id) {
 // ── Dashboard ──
 function renderDashboard() {
   var total = students.length;
-  var active = 0, expiring = 0, expired = 0;
+  var activeCount = 0, expiring = 0, expired = 0, inactiveCount = 0;
   var thisMonth = today().substring(0, 7);
   var monthIncome = 0;
   students.forEach(function(s) {
+    if (s.active === false) { inactiveCount++; return; }
     var st = getStudentStatus(s.id);
-    if (st.status === 'active') active++;
+    if (st.status === 'active') activeCount++;
     else if (st.status === 'expiring') expiring++;
     else if (st.status === 'expired') expired++;
   });
@@ -231,15 +235,16 @@ function renderDashboard() {
 
   var grid = document.getElementById('statsGrid');
   if (grid) grid.innerHTML =
-    '<div class="stat-card orange"><div class="stat-label">学员总数</div><div class="stat-value orange">' + total + '</div><div class="stat-sub">训练有效 ' + active + ' · 待提醒 ' + expiring + '</div></div>' +
-    '<div class="stat-card green"><div class="stat-label">训练有效会员</div><div class="stat-value green">' + active + '</div><div class="stat-sub">占比 ' + (total ? Math.round(active/total*100) : 0) + '%</div></div>' +
+    '<div class="stat-card orange"><div class="stat-label">学员总数</div><div class="stat-value orange">' + total + '</div><div class="stat-sub">训练有效 ' + activeCount + ' · 待提醒 ' + expiring + '</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">训练有效会员</div><div class="stat-value green">' + activeCount + '</div><div class="stat-sub">占比 ' + (total ? Math.round(activeCount/total*100) : 0) + '%</div></div>' +
     '<div class="stat-card red"><div class="stat-label">待提醒</div><div class="stat-value red">' + (expiring + expired) + '</div><div class="stat-sub">即将到期 ' + expiring + ' · 已过期 ' + expired + '</div></div>' +
+    '<div class="stat-card" style="border-color:var(--text-muted);"><div class="stat-label">已离队</div><div class="stat-value" style="color:var(--text-muted);">' + inactiveCount + '</div><div class="stat-sub">已停止到期提醒</div></div>' +
     '<div class="stat-card blue"><div class="stat-label">本月训练收入</div><div class="stat-value blue">¥' + monthIncome.toLocaleString() + '</div><div class="stat-sub">' + payments.filter(function(p){return p.date&&p.date.startsWith(thisMonth)}).length + ' 笔缴费</div></div>' +
     '<div class="stat-card purple"><div class="stat-label">训练请假天数</div><div class="stat-value purple">' + totalLeave + '</div><div class="stat-sub">所有学员请假合计</div></div>' +
     '<div class="stat-card yellow"><div class="stat-label">文化课本月收入</div><div class="stat-value yellow">¥' + cultureMonthIncome.toLocaleString() + '</div><div class="stat-sub">有效 ' + cultureActive + ' · 待续费 ' + cultureExpiring + '</div></div>' +
     '<div class="stat-card orange"><div class="stat-label">文化课请假天数</div><div class="stat-value orange">' + cultureTotalLeave + '</div><div class="stat-sub">文化课请假合计</div></div>';
 
-  renderDonut(active, expiring, expired, total - active - expiring - expired);
+  renderDonut(activeCount, expiring, expired, total - activeCount - expiring - expired - inactiveCount);
   renderBarChart();
   var badge = document.getElementById('remindBadge');
   if (badge) badge.textContent = (expiring + expired) > 0 ? (expiring + expired) : '';
@@ -325,13 +330,24 @@ function renderStudents() {
   q = q.trim().toLowerCase();
   var list = students.filter(function(s) {
     if (q && s.name.toLowerCase().indexOf(q) === -1 && (s.phone || '').indexOf(q) === -1) return false;
-    if (studentFilter !== 'all') {
+    if (studentFilter === 'left') {
+      // 只显示离队学员
+      if (s.active !== false) return false;
+    } else if (studentFilter !== 'all') {
+      // 训练状态筛选：只筛活跃学员
+      if (s.active === false) return false;
       var st = getStudentStatus(s.id);
       if (studentFilter === 'active' && st.status !== 'active') return false;
       if (studentFilter === 'expiring' && st.status !== 'expiring') return false;
       if (studentFilter === 'expired' && st.status !== 'expired') return false;
     }
     return true;
+  });
+  // 排序：活跃学员在前，离队学员在后
+  list.sort(function(a, b) {
+    if (a.active === false && b.active !== false) return 1;
+    if (a.active !== false && b.active === false) return -1;
+    return 0;
   });
   var totalPages = Math.max(1, Math.ceil(list.length / STUDENTS_PER_PAGE));
   if (studentPage > totalPages) studentPage = totalPages;
@@ -340,21 +356,28 @@ function renderStudents() {
   var tbody = document.getElementById('studentsBody');
   if (!tbody) return;
   tbody.innerHTML = pageList.map(function(s) {
+    var isLeft = s.active === false;
     var st = getStudentStatus(s.id);
     var leaveTotal = payments.filter(function(p) { return p.studentId === s.id; }).reduce(function(sum, p) { return sum + (p.leaveDays || 0); }, 0);
-    var stClass = 'status-' + st.status;
-    var stText = ({active:'有效',expiring:'即将到期',expired:'已过期',none:'未缴费'})[st.status] || '';
-    var expiryStr = st.actualExpiry ? st.actualExpiry + ' (' + (st.days < 0 ? '已过期' + Math.abs(st.days) + '天' : '剩' + st.days + '天') + ')' : '-';
-    return '<tr>' +
+    var stClass = isLeft ? 'status-none' : 'status-' + st.status;
+    var stText = isLeft ? '🚫 已离队' : ({active:'有效',expiring:'即将到期',expired:'已过期',none:'未缴费'})[st.status] || '';
+    var stColor = isLeft ? 'var(--text-muted)' : (st.status==='active'?'var(--accent-green)':st.status==='expiring'?'var(--accent-yellow)':'var(--accent-red)');
+    var expiryStr = isLeft ? '-' : (st.actualExpiry ? st.actualExpiry + ' (' + (st.days < 0 ? '已过期' + Math.abs(st.days) + '天' : '剩' + st.days + '天') + ')' : '-');
+    var rowStyle = isLeft ? 'opacity:0.5;' : '';
+    var toggleBtn = isLeft ?
+      '<button class="btn btn-sm btn-green" onclick="toggleStudentActive(\'' + s.id + '\')">复课</button>' :
+      '<button class="btn btn-sm btn-orange-outline" onclick="toggleStudentActive(\'' + s.id + '\')">离队</button>';
+    return '<tr style="' + rowStyle + '">' +
       '<td><b>' + esc(s.name) + '</b></td>' +
       '<td>' + esc(s.phone || '-') + '</td>' +
       '<td>' + esc(s.event || '-') + '</td>' +
-      '<td><span class="' + stClass + '"><span class="status-dot" style="background:' + (st.status==='active'?'var(--accent-green)':st.status==='expiring'?'var(--accent-yellow)':'var(--accent-red)') + '"></span>' + stText + '</span></td>' +
+      '<td><span class="' + stClass + '"><span class="status-dot" style="background:' + stColor + '"></span>' + stText + '</span></td>' +
       '<td>' + expiryStr + '</td>' +
-      '<td>' + (leaveTotal > 0 ? '<span class="leave-badge">📅 请假' + leaveTotal + '天</span>' : '-') + '</td>' +
+      '<td>' + (isLeft ? '-' : (leaveTotal > 0 ? '<span class="leave-badge">📅 请假' + leaveTotal + '天</span>' : '-')) + '</td>' +
       '<td><div class="action-btns">' +
         '<button class="btn btn-sm btn-secondary" onclick="openStudentModal(\'' + s.id + '\')">编辑</button>' +
         '<button class="btn btn-sm btn-blue" onclick="openPaymentModal(null,\'' + s.id + '\')">缴费</button>' +
+        toggleBtn +
         '<button class="btn btn-sm btn-danger" onclick="deleteStudent(\'' + s.id + '\')">删除</button>' +
       '</div></td>' +
     '</tr>';
@@ -369,6 +392,22 @@ function filterStudents(f, btn) {
   document.querySelectorAll('#page-students .filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   renderStudents();
+}
+
+function toggleStudentActive(id) {
+  var s = students.find(function(x) { return x.id === id; });
+  if (!s) return;
+  if (s.active === false) {
+    s.active = true;
+    showToast(s.name + ' 已复课，将恢复到期提醒');
+  } else {
+    s.active = false;
+    showToast(s.name + ' 已标记离队，到期提醒已停止');
+  }
+  saveData();
+  renderStudents();
+  renderDashboard();
+  renderRemind('expiring', document.querySelector('#page-remind .tab-btn.active') || document.querySelector('#page-remind .tab-btn'));
 }
 
 function openStudentModal(id) {
@@ -406,6 +445,7 @@ function saveStudent() {
       phone: (document.getElementById('sPhone').value || '').trim(),
       event: document.getElementById('sEvent').value,
       note: (document.getElementById('sNote').value || '').trim(),
+      active: true,
       createdAt: today()
     });
   }
@@ -596,6 +636,8 @@ function renderRemind(tab, btn) {
   if (btn) btn.classList.add('active');
   var list = [];
   students.forEach(function(s) {
+    // 离队学员不参与到期提醒
+    if (s.active === false) return;
     var st = getStudentStatus(s.id);
     if (tab === 'expiring' && st.status === 'expiring') list.push({s:s, st:st});
     if (tab === 'expired' && st.status === 'expired') list.push({s:s, st:st});
@@ -952,6 +994,7 @@ function importExcelData(rows) {
         phone: (row[colMap.phone] || '').toString(),
         event: (row[colMap.event] || '').toString(),
         note: (row[colMap.note] || '').toString(),
+        active: true,
         createdAt: today()
       };
       students.push(student);
@@ -1084,7 +1127,7 @@ function generateStudentPage() {
           note: cp.note
         };
       });
-      return { name: s.name, event: s.event, status: st.status, actualExpiry: st.actualExpiry, daysLeft: st.days, leaveTotal: leaveTotal, payments: payList, cultureLeaveTotal: cultureLeaveTotal, culturePayments: culturePayList };
+      return { name: s.name, event: s.event, active: s.active !== false, status: st.status, actualExpiry: st.actualExpiry, daysLeft: st.days, leaveTotal: leaveTotal, payments: payList, cultureLeaveTotal: cultureLeaveTotal, culturePayments: culturePayList };
     })
   };
   var htmlContent = getStudentPageHTML(pubData);
