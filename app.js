@@ -1,25 +1,43 @@
 /* 精准田径俱乐部 - 核心逻辑 */
-const STORAGE_KEY = 'trackclub_data_v5';
-let students = [], payments = [], culturePayments = [];
+const STORAGE_KEY = 'trackclub_data_v6';
+let students = [], payments = [], culturePayments = [], leaves = [];
 let editingStudentId = null, editingPaymentId = null, editingCultureId = null;
 let studentFilter = 'all', studentPage = 1, STUDENTS_PER_PAGE = 15;
 let paymentPage = 1, PAYMENTS_PER_PAGE = 15;
 let cultureFilter = 'all', culturePage = 1, CULTURE_PER_PAGE = 15;
+let leaveFilter = 'all', leavePage = 1, LEAVES_PER_PAGE = 15;
 
 // ── 数据存储 ──
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || [];
+    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || []; leaves = d.leaves || [];
       // 迁移：给没有 active 字段的学员补上
       students.forEach(function(s) { if (s.active === undefined) s.active = true; });
       return; }
   } catch(e) {}
-  // 清除旧版本数据，加载真实学员数据
-  localStorage.removeItem('trackclub_data_v4');
-  localStorage.removeItem('trackclub_data_v3');
-  localStorage.removeItem('trackclub_data_v2');
-  initDemoData();
+  // 从旧版迁移数据
+  var migrated = false;
+  try {
+    var oldRaw = localStorage.getItem('trackclub_data_v5');
+    if (oldRaw) {
+      var oldD = JSON.parse(oldRaw);
+      students = oldD.students || [];
+      payments = oldD.payments || [];
+      culturePayments = oldD.culturePayments || [];
+      leaves = [];
+      students.forEach(function(s) { if (s.active === undefined) s.active = true; });
+      migrated = true;
+    }
+  } catch(e2) {}
+  if (!migrated) {
+    // 清除旧版本数据
+    localStorage.removeItem('trackclub_data_v5');
+    localStorage.removeItem('trackclub_data_v4');
+    localStorage.removeItem('trackclub_data_v3');
+    localStorage.removeItem('trackclub_data_v2');
+    initDemoData();
+  }
 }
 
 function initDemoData() {
@@ -87,7 +105,7 @@ function initDemoData() {
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({students, payments, culturePayments}));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({students, payments, culturePayments, leaves}));
 }
 
 function today() {
@@ -181,6 +199,7 @@ function switchPage(page) {
   if (page === 'students') renderStudents();
   if (page === 'payments') renderPayments();
   if (page === 'culture') renderCulture();
+  if (page === 'leaves') renderLeaves();
   if (page === 'remind') renderRemind('expiring', document.querySelector('#page-remind .tab-btn'));
 }
 
@@ -232,6 +251,9 @@ function renderDashboard() {
     else if (diff <= 7) cultureExpiring++;
     else cultureActive++;
   });
+  // 离营统计
+  var currentAway = leaves.filter(function(l) { return !l.returnDate; }).length;
+  var leaveEffectiveTotal = leaves.reduce(function(sum, l) { return sum + (l.effectiveDays || 0); }, 0);
 
   var grid = document.getElementById('statsGrid');
   if (grid) grid.innerHTML =
@@ -242,12 +264,15 @@ function renderDashboard() {
     '<div class="stat-card blue"><div class="stat-label">本月训练收入</div><div class="stat-value blue">¥' + monthIncome.toLocaleString() + '</div><div class="stat-sub">' + payments.filter(function(p){return p.date&&p.date.startsWith(thisMonth)}).length + ' 笔缴费</div></div>' +
     '<div class="stat-card purple"><div class="stat-label">训练请假天数</div><div class="stat-value purple">' + totalLeave + '</div><div class="stat-sub">所有学员请假合计</div></div>' +
     '<div class="stat-card yellow"><div class="stat-label">文化课本月收入</div><div class="stat-value yellow">¥' + cultureMonthIncome.toLocaleString() + '</div><div class="stat-sub">有效 ' + cultureActive + ' · 待续费 ' + cultureExpiring + '</div></div>' +
-    '<div class="stat-card orange"><div class="stat-label">文化课请假天数</div><div class="stat-value orange">' + cultureTotalLeave + '</div><div class="stat-sub">文化课请假合计</div></div>';
+    '<div class="stat-card orange"><div class="stat-label">文化课请假天数</div><div class="stat-value orange">' + cultureTotalLeave + '</div><div class="stat-sub">文化课请假合计</div></div>' +
+    '<div class="stat-card yellow"><div class="stat-label">当前离营人数</div><div class="stat-value yellow">' + currentAway + '</div><div class="stat-sub">有效请假天数累计 ' + leaveEffectiveTotal + '</div></div>';
 
   renderDonut(activeCount, expiring, expired, total - activeCount - expiring - expired - inactiveCount);
   renderBarChart();
   var badge = document.getElementById('remindBadge');
   if (badge) badge.textContent = (expiring + expired) > 0 ? (expiring + expired) : '';
+  var lbadge = document.getElementById('leaveBadge');
+  if (lbadge) lbadge.textContent = currentAway > 0 ? currentAway : '';
 }
 
 function renderDonut(a, e, x, n) {
@@ -460,6 +485,8 @@ function deleteStudent(id) {
   if (!confirm('确定删除该学员？相关缴费记录也会删除！')) return;
   students = students.filter(function(s) { return s.id !== id; });
   payments = payments.filter(function(p) { return p.studentId !== id; });
+  culturePayments = culturePayments.filter(function(p) { return p.studentId !== id; });
+  leaves = leaves.filter(function(l) { return l.studentId !== id; });
   saveData();
   renderStudents();
   renderDashboard();
@@ -948,7 +975,209 @@ function exportCultureExcel() {
   downloadExcel(data, '文化课缴费记录_' + today());
 }
 
-// ── Excel 导入导出 ──
+// ── 离营请假 ──
+function getLeaveEffectiveDays(totalDays) {
+  if (totalDays <= 3) return 0;
+  return totalDays - 3;
+}
+
+function renderLeaves() {
+  // 统计
+  var awayList = leaves.filter(function(l) { return !l.returnDate; });
+  var returnedList = leaves.filter(function(l) { return l.returnDate; });
+  var awayCount = awayList.length;
+  var totalEffective = 0;
+  leaves.forEach(function(l) {
+    if (l.effectiveDays) totalEffective += l.effectiveDays;
+  });
+  var thisMonthAway = 0;
+  var thisMonthStr = today().substring(0, 7);
+  awayList.forEach(function(l) {
+    if (l.leaveDate && l.leaveDate.substring(0, 7) === thisMonthStr) thisMonthAway++;
+  });
+
+  var sgrid = document.getElementById('leaveStatsGrid');
+  if (sgrid) sgrid.innerHTML =
+    '<div class="stat-card orange"><div class="stat-label">当前离营人数</div><div class="stat-value orange">' + awayCount + '</div><div class="stat-sub">正在请假中</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">累计有效请假天数</div><div class="stat-value purple">' + totalEffective + '</div><div class="stat-sub">已扣除3天宽限期</div></div>' +
+    '<div class="stat-card green"><div class="stat-label">已回营记录</div><div class="stat-value green">' + returnedList.length + '</div><div class="stat-sub">历史请假人次</div></div>' +
+    '<div class="stat-card blue"><div class="stat-label">本月离营人次</div><div class="stat-value blue">' + thisMonthAway + '</div><div class="stat-sub">' + thisMonthStr + '</div></div>';
+
+  // 更新侧边栏徽章
+  var badge = document.getElementById('leaveBadge');
+  if (badge) badge.textContent = awayCount > 0 ? awayCount : '';
+
+  // 列表
+  var q = (document.getElementById('leaveSearch') || {value:''}).value || '';
+  q = q.trim().toLowerCase();
+  var list = leaves.filter(function(l) {
+    var s = students.find(function(x) { return x.id === l.studentId; });
+    if (q && !(s && s.name.toLowerCase().indexOf(q) >= 0)) return false;
+    if (leaveFilter === 'away' && l.returnDate) return false;
+    if (leaveFilter === 'returned' && !l.returnDate) return false;
+    return true;
+  }).sort(function(a, b) {
+    // 离营中排前面，按离营日期倒序
+    if (!a.returnDate && b.returnDate) return -1;
+    if (a.returnDate && !b.returnDate) return 1;
+    return (b.leaveDate || '').localeCompare(a.leaveDate || '');
+  });
+
+  var totalPages = Math.max(1, Math.ceil(list.length / LEAVES_PER_PAGE));
+  if (leavePage > totalPages) leavePage = totalPages;
+  var pageList = list.slice((leavePage - 1) * LEAVES_PER_PAGE, leavePage * LEAVES_PER_PAGE);
+
+  var tbody = document.getElementById('leavesBody');
+  if (!tbody) return;
+  tbody.innerHTML = pageList.map(function(l) {
+    var s = students.find(function(x) { return x.id === l.studentId; });
+    var isAway = !l.returnDate;
+    var totalDays = l.totalDays;
+    var effectiveDays = l.effectiveDays;
+    if (isAway) {
+      // 还在离营中，实时计算
+      var todayDate = today();
+      if (l.leaveDate <= todayDate) {
+        totalDays = daysBetween(l.leaveDate, todayDate) + 1;
+        effectiveDays = getLeaveEffectiveDays(totalDays);
+      } else {
+        totalDays = 0;
+        effectiveDays = 0;
+      }
+    }
+    var statusStyle = isAway ? 'color:var(--accent-yellow);font-weight:600;' : 'color:var(--accent-green);font-weight:600;';
+    var statusText = isAway ? '🏕️ 离营中' : '✅ 已回营 (' + esc(l.returnDate) + ')';
+    var effectiveText = effectiveDays > 0 ? '<b style="color:var(--accent-purple);">' + effectiveDays + ' 天</b>' : '<span style="color:var(--text-muted);">0 天</span>';
+    var actionBtns = '';
+    if (isAway) {
+      actionBtns = '<button class="btn btn-sm btn-green" onclick="returnLeave(\'' + l.id + '\')">✅ 已回营</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="deleteLeave(\'' + l.id + '\')">删除</button>';
+    } else {
+      actionBtns = '<button class="btn btn-sm btn-danger" onclick="deleteLeave(\'' + l.id + '\')">删除</button>';
+    }
+    var rowStyle = isAway ? 'background:rgba(234,179,8,0.05);' : '';
+    var totalDaysText = totalDays > 0 ? totalDays + ' 天' : '-';
+    if (isAway && totalDays >= 1) totalDaysText = '<b style="color:var(--accent-yellow);">' + totalDays + ' 天</b>';
+    return '<tr style="' + rowStyle + '">' +
+      '<td><b>' + esc(s ? s.name : '（已删）') + '</b></td>' +
+      '<td>' + esc(l.leaveDate || '-') + '</td>' +
+      '<td>' + (isAway ? '<span style="color:var(--text-muted);">—</span>' : esc(l.returnDate)) + '</td>' +
+      '<td>' + totalDaysText + '</td>' +
+      '<td>' + effectiveText + '</td>' +
+      '<td><span style="' + statusStyle + '">' + statusText + '</span></td>' +
+      '<td><div class="action-btns">' + actionBtns + '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  if (list.length === 0 && pageList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">暂无离营请假记录</td></tr>';
+  }
+
+  renderPagination('leavesPagination', totalPages, leavePage, function(n) { leavePage = n; renderLeaves(); });
+}
+
+function filterLeaves(f, btn) {
+  leaveFilter = f;
+  leavePage = 1;
+  document.querySelectorAll('#page-leaves .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderLeaves();
+}
+
+function openLeaveModal() {
+  // 只列出活跃学员
+  var sel = document.getElementById('lStudentId');
+  if (sel) {
+    var activeStudents = students.filter(function(s) { return s.active !== false; });
+    sel.innerHTML = activeStudents.map(function(s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+  }
+  document.getElementById('lLeaveDate').value = today();
+  openModal('leaveModal');
+}
+
+function startLeave() {
+  var studentId = document.getElementById('lStudentId').value;
+  var leaveDate = document.getElementById('lLeaveDate').value;
+  if (!studentId) { showToast('请选择学员', 'error'); return; }
+  if (!leaveDate) { showToast('请选择离营日期', 'error'); return; }
+  // 检查该学员是否已经在离营中
+  var existing = leaves.find(function(l) { return l.studentId === studentId && !l.returnDate; });
+  if (existing) { showToast('该学员当前已在离营中，请先标记回营', 'error'); return; }
+  var s = students.find(function(x) { return x.id === studentId; });
+  leaves.push({
+    id: 'leave_' + Date.now(),
+    studentId: studentId,
+    leaveDate: leaveDate,
+    returnDate: null,
+    totalDays: 0,
+    effectiveDays: 0
+  });
+  saveData();
+  closeModal('leaveModal');
+  renderLeaves();
+  renderDashboard();
+  showToast(s ? s.name + ' 已标记离营（' + leaveDate + '）' : '已标记离营');
+}
+
+function returnLeave(id) {
+  var l = leaves.find(function(x) { return x.id === id; });
+  if (!l) return;
+  var todayDate = today();
+  var totalDays = daysBetween(l.leaveDate, todayDate) + 1;
+  if (totalDays < 1) totalDays = 1;
+  var effectiveDays = getLeaveEffectiveDays(totalDays);
+  l.returnDate = todayDate;
+  l.totalDays = totalDays;
+  l.effectiveDays = effectiveDays;
+  saveData();
+  renderLeaves();
+  renderDashboard();
+  var s = students.find(function(x) { return x.id === l.studentId; });
+  var msg = '已标记回营，离营共 ' + totalDays + ' 天';
+  if (effectiveDays > 0) {
+    msg += '，计入请假 ' + effectiveDays + ' 天（已扣3天宽限）';
+  } else {
+    msg += '，未超过3天不计入请假';
+  }
+  showToast(msg);
+}
+
+function deleteLeave(id) {
+  if (!confirm('确定删除该离营记录？')) return;
+  leaves = leaves.filter(function(l) { return l.id !== id; });
+  saveData();
+  renderLeaves();
+  renderDashboard();
+  showToast('离营记录已删除');
+}
+
+function exportLeavesExcel() {
+  var data = leaves.map(function(l) {
+    var s = students.find(function(x) { return x.id === l.studentId; });
+    var totalDays = l.totalDays;
+    var effectiveDays = l.effectiveDays;
+    if (!l.returnDate) {
+      var todayDate = today();
+      if (l.leaveDate <= todayDate) {
+        totalDays = daysBetween(l.leaveDate, todayDate) + 1;
+        effectiveDays = getLeaveEffectiveDays(totalDays);
+      } else {
+        totalDays = 0;
+        effectiveDays = 0;
+      }
+    }
+    return {
+      '学员姓名': s ? s.name : '',
+      '训练项目': s ? s.event : '',
+      '离营日期': l.leaveDate,
+      '回营日期': l.returnDate || '离营中',
+      '离营总天数': totalDays,
+      '计入请假天数': effectiveDays,
+      '状态': l.returnDate ? '已回营' : '离营中'
+    };
+  });
+  downloadExcel(data, '离营请假记录_' + today());
+}
 function handleExcelImport(event) {
   var file = event.target.files[0];
   if (!file) return;
@@ -1074,6 +1303,16 @@ function exportFullExcel() {
     return {'学员姓名':s?s.name:'','科目':cp.subject,'缴费金额':cp.amount,'缴费日期':cp.date,'课程天数':cp.days,'请假天数':cp.leaveDays || 0,'原到期日':cp.expiry,'实际到期日':getCultureActualExpiry(cp),'备注':cp.note};
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cData), '文化课缴费');
+  var lData = leaves.map(function(l) {
+    var s = students.find(function(x) { return x.id === l.studentId; });
+    var td = l.totalDays, ed = l.effectiveDays;
+    if (!l.returnDate && l.leaveDate <= today()) {
+      td = daysBetween(l.leaveDate, today()) + 1;
+      ed = getLeaveEffectiveDays(td);
+    }
+    return {'学员姓名':s?s.name:'','训练项目':s?s.event:'','离营日期':l.leaveDate,'回营日期':l.returnDate || '离营中','离营总天数':td,'计入请假天数':ed,'状态':l.returnDate ? '已回营' : '离营中'};
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(lData), '离营请假');
   XLSX.writeFile(wb, '精准田径俱乐部_完整数据_' + today() + '.xlsx');
 }
 
@@ -1085,7 +1324,7 @@ function downloadExcel(data, filename) {
 }
 
 function backupJSON() {
-  var blob = new Blob([JSON.stringify({students:students, payments:payments, culturePayments:culturePayments}, null, 2)], {type:'application/json'});
+  var blob = new Blob([JSON.stringify({students:students, payments:payments, culturePayments:culturePayments, leaves:leaves}, null, 2)], {type:'application/json'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'trackclub_backup_' + today() + '.json';
