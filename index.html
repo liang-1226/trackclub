@@ -193,11 +193,6 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
         到期提醒
         <span class="nav-badge" id="remindBadge">0</span>
       </div>
-      <div class="nav-item" data-page="leaves" onclick="switchPage('leaves')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M12 11v4"/><path d="M10 13h4"/></svg>
-        离营请假
-        <span class="nav-badge" id="leaveBadge">0</span>
-      </div>
       <div class="nav-section-label">数据管理</div>
       <div class="nav-item" data-page="data" onclick="switchPage('data')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -223,6 +218,13 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
         <div class="chart-card"><h4>近6个月缴费趋势</h4><div id="barChart" style="display:flex;align-items:flex-end;gap:8px;height:180px;padding-top:20px;"></div></div>
       </div>
     </div>
+      <div class="chart-card" style="margin-top:20px;">
+        <h4>🏕️ 离营动态</h4>
+        <div id="leaveDashboardInfo" style="font-size:0.85rem;color:var(--text-secondary);line-height:1.8;">
+          加载中...
+        </div>
+      </div>
+
 
     <!-- 学员管理 -->
     <div class="page" id="page-students" style="display:none;">
@@ -246,7 +248,7 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead><tr><th>姓名</th><th>手机</th><th>项目</th><th>状态</th><th>实际到期日</th><th>请假天数</th><th>操作</th></tr></thead>
+            <thead><tr><th>姓名</th><th>手机</th><th>项目</th><th>状态</th><th>实际到期日</th><th>请假天数</th><th>离营状态</th><th>操作</th></tr></thead>
             <tbody id="studentsBody"></tbody>
           </table>
         </div>
@@ -319,35 +321,6 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
       <div id="remindContent"></div>
     </div>
 
-    <!-- 离营请假 -->
-    <div class="page" id="page-leaves" style="display:none;">
-      <div class="page-header">
-        <div><h2>离营请假</h2><div class="page-header-sub">管理学员暂时离营请假 · 3天内不计入请假天数</div></div>
-        <div class="header-actions">
-          <button class="btn btn-secondary" onclick="exportLeavesExcel()">📥 导出Excel</button>
-          <button class="btn btn-primary" onclick="openLeaveModal()">🏕️ 新增离营</button>
-        </div>
-      </div>
-      <div class="stats-grid" id="leaveStatsGrid"></div>
-      <div class="table-wrap">
-        <div class="table-toolbar">
-          <input type="text" class="table-search" placeholder="搜索学员姓名..." id="leaveSearch" oninput="renderLeaves()">
-          <div class="filter-group">
-            <button class="filter-btn active" onclick="filterLeaves('all',this)">全部</button>
-            <button class="filter-btn" onclick="filterLeaves('away',this)">🏕️ 离营中</button>
-            <button class="filter-btn" onclick="filterLeaves('returned',this)">✅ 已回营</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead><tr><th>学员</th><th>离营日期</th><th>回营日期</th><th>离营天数</th><th>计入请假</th><th>状态</th><th>操作</th></tr></thead>
-            <tbody id="leavesBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="leavesPagination"></div>
-      </div>
-    </div>
-
     <!-- 数据管理 -->
     <div class="page" id="page-data" style="display:none;">
       <div class="page-header">
@@ -377,7 +350,6 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
             <button class="btn btn-secondary" onclick="exportStudentsExcel()" style="justify-content:flex-start;">📋 导出学员列表 (.xlsx)</button>
             <button class="btn btn-secondary" onclick="exportPaymentsExcel()" style="justify-content:flex-start;">🏃 导出训练缴费 (.xlsx)</button>
             <button class="btn btn-secondary" onclick="exportCultureExcel()" style="justify-content:flex-start;">📚 导出文化课缴费 (.xlsx)</button>
-            <button class="btn btn-secondary" onclick="exportLeavesExcel()" style="justify-content:flex-start;">🏕️ 导出离营请假 (.xlsx)</button>
             <button class="btn btn-secondary" onclick="exportFullExcel()" style="justify-content:flex-start;">📊 导出完整数据 (.xlsx)</button>
             <button class="btn btn-secondary" onclick="backupJSON()" style="justify-content:flex-start;">💾 备份 JSON 文件</button>
           </div>
@@ -570,57 +542,64 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
       <button class="btn btn-primary" onclick="saveCulture()">保存</button>
     </div>
   </div>
-</div>
+</div></div>
 
-<!-- 离营请假弹窗 -->
-<div class="modal-overlay" id="leaveModal">
-  <div class="modal">
-    <div class="modal-header"><h3>新增离营请假</h3><button class="modal-close" onclick="closeModal('leaveModal')">×</button></div>
+<!-- 离营登记弹窗 -->
+<div class="modal-overlay" id="startLeaveModal">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><h3 id="startLeaveTitle">标记离营</h3><button class="modal-close" onclick="closeModal('startLeaveModal')">×</button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">学员 *</label><select class="form-select" id="lStudentId"></select></div>
-      <div class="form-group"><label class="form-label">离营日期 *</label><input class="form-input" id="lLeaveDate" type="date">
-        <div class="form-hint">选择学员离营当天的日期</div>
+      <div class="form-group">
+        <label class="form-label">学员</label>
+        <div id="startLeaveStudentName" style="font-size:1rem;font-weight:600;color:var(--accent-orange);padding:8px 0;"></div>
       </div>
-      <div style="background:var(--bg-input);padding:12px 16px;border-radius:var(--radius-sm);margin-top:8px;font-size:0.82rem;color:var(--text-muted);line-height:1.8;">
-        💡 <b>请假规则：</b><br>
-        离营期间前 <b style="color:var(--accent-green);">3天</b> 不计入请假天数<br>
-        超过 3 天的部分才会被计入 <b style="color:var(--accent-purple);">实际请假天数</b>
+      <div class="form-group">
+        <label class="form-label">离营日期 *</label>
+        <input class="form-input" id="startLeaveDate" type="date">
+        <div class="form-hint">选择学员离营的日期（当天即开始计算离营天数）</div>
+      </div>
+      <div style="background:var(--bg-input);padding:10px 14px;border-radius:var(--radius-sm);font-size:0.8rem;color:var(--text-muted);line-height:1.7;">
+        ⚠️ <b>请假规则：</b>前 <b style="color:var(--accent-green);">2天</b> 不计入请假，第 <b style="color:var(--accent-purple);">3天起（含第3天）</b> 计入有效请假天数
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('leaveModal')">取消</button>
-      <button class="btn btn-primary" onclick="startLeave()">确认离营</button>
+      <button class="btn btn-secondary" onclick="closeModal('startLeaveModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmStartLeave()">确认离营</button>
+    </div>
+  </div>
+</div>
+
+<!-- 回营登记弹窗 -->
+<div class="modal-overlay" id="returnLeaveModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><h3>标记回营</h3><button class="modal-close" onclick="closeModal('returnLeaveModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">学员</label>
+        <div id="returnLeaveStudentName" style="font-size:1rem;font-weight:600;color:var(--accent-green);padding:8px 0;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">离营日期</label>
+        <div id="returnLeaveStartDate" style="font-size:0.9rem;color:var(--text-secondary);padding:6px 0;"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">回营日期 *</label>
+        <input class="form-input" id="returnLeaveDate" type="date" onchange="updateReturnLeaveCalc()">
+        <div class="form-hint">选择学员回营的日期（将自动计算请假天数）</div>
+      </div>
+      <div id="returnLeaveCalc" style="background:var(--bg-input);padding:12px 16px;border-radius:var(--radius-sm);margin-top:8px;font-size:0.85rem;display:none;">
+        <div style="color:var(--text-muted);margin-bottom:6px;">自动计算</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div>离营天数：<b id="rlTotalDays" style="color:var(--accent-yellow);">—</b></div>
+          <div>计入请假：<b id="rlEffectiveDays" style="color:var(--accent-purple);">—</b> 天</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('returnLeaveModal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmReturnLeave()">确认回营</button>
     </div>
   </div>
 </div>
 
 <!-- 发布弹窗 -->
-<div class="modal-overlay" id="shareModal">
-  <div class="modal" style="max-width:540px;">
-    <div class="modal-header"><h3>发布给学生查询</h3><button class="modal-close" onclick="closeModal('shareModal')">×</button></div>
-    <div class="modal-body" style="text-align:center;">
-      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">生成一个查询页面，学生打开后输入姓名即可查看自己的缴费状态和到期时间</p>
-      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
-        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">步骤一：生成并下载查询页面</div>
-        <button class="btn btn-primary" onclick="generateStudentPage()" style="margin-bottom:8px;">📄 生成查询页面</button>
-        <div id="downloadArea" style="display:none;"><a id="downloadLink" style="color:var(--accent-orange);font-size:0.85rem;text-decoration:underline;">点击下载 query.html</a></div>
-      </div>
-      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
-        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px;">步骤二：分享给学生</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);line-height:1.8;text-align:left;">
-          1. 将下载的 <b>query.html</b> 文件通过微信发给学生<br>
-          2. 学生在手机上用浏览器打开即可查询<br>
-          3. 或上传到任意网页服务器，把链接发到微信群
-        </div>
-      </div>
-      <div style="font-size:0.78rem;color:var(--text-muted);">数据将打包在页面中，无需服务器即可使用</div>
-    </div>
-  </div>
-</div>
-
-<!-- Toast 容器 -->
-<div class="toast-container" id="toastContainer"></div>
-
-<script src="app.js"></script>
-</body>
-</html>
