@@ -559,7 +559,7 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
         <div class="form-hint">选择学员离营的日期（当天即开始计算离营天数）</div>
       </div>
       <div style="background:var(--bg-input);padding:10px 14px;border-radius:var(--radius-sm);font-size:0.8rem;color:var(--text-muted);line-height:1.7;">
-        ⚠️ <b>请假规则：</b>前 <b style="color:var(--accent-green);">2天</b> 不计入请假，第 <b style="color:var(--accent-purple);">3天起（含第3天）</b> 计入有效请假天数
+        ⚠️ <b>请假规则：</b>离营 <b style="color:var(--accent-green);">3天以内（含3天）</b> 不计入请假，超过3天则 <b style="color:var(--accent-purple);">全部天数</b> 计入请假
       </div>
     </div>
     <div class="modal-footer">
@@ -629,6 +629,6 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
 <!-- Toast 容器 -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
