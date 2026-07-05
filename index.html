@@ -603,3 +603,32 @@ tbody tr { transition: background 0.15s; } tbody tr:hover { background: var(--bg
 </div>
 
 <!-- 发布弹窗 -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header"><h3>发布给学生查询</h3><button class="modal-close" onclick="closeModal('shareModal')">×</button></div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">生成一个查询页面，学生打开后输入姓名即可查看自己的缴费状态和到期时间</p>
+      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
+        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">步骤一：生成并下载查询页面</div>
+        <button class="btn btn-primary" onclick="generateStudentPage()" style="margin-bottom:8px;">📄 生成查询页面</button>
+        <div id="downloadArea" style="display:none;"><a id="downloadLink" style="color:var(--accent-orange);font-size:0.85rem;text-decoration:underline;">点击下载 query.html</a></div>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;">
+        <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px;">步骤二：分享给学生</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);line-height:1.8;text-align:left;">
+          1. 将下载的 <b>query.html</b> 文件通过微信发给学生<br>
+          2. 学生在手机上用浏览器打开即可查询<br>
+          3. 或上传到任意网页服务器，把链接发到微信群
+        </div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);">数据将打包在页面中，无需服务器即可使用</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js?v=2"></script>
+</body>
+</html>
