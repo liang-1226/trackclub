@@ -199,7 +199,6 @@ function switchPage(page) {
   if (page === 'students') renderStudents();
   if (page === 'payments') renderPayments();
   if (page === 'culture') renderCulture();
-  if (page === 'leaves') renderLeaves();
   if (page === 'remind') renderRemind('expiring', document.querySelector('#page-remind .tab-btn'));
 }
 
@@ -271,8 +270,37 @@ function renderDashboard() {
   renderBarChart();
   var badge = document.getElementById('remindBadge');
   if (badge) badge.textContent = (expiring + expired) > 0 ? (expiring + expired) : '';
-  var lbadge = document.getElementById('leaveBadge');
-  if (lbadge) lbadge.textContent = currentAway > 0 ? currentAway : '';
+  // 离营动态
+  var leaveInfoDiv = document.getElementById('leaveDashboardInfo');
+  if (leaveInfoDiv) {
+    var html = '';
+    var awayList = leaves.filter(function(l) { return !l.returnDate; });
+    if (awayList.length > 0) {
+      html += '<div style="margin-bottom:10px;"><b style="color:var(--accent-yellow);">🏕️ 当前离营（' + awayList.length + '人）</b></div>';
+      awayList.forEach(function(l) {
+        var s = students.find(function(x) { return x.id === l.studentId; });
+        var days = l.leaveDate <= today() ? daysBetween(l.leaveDate, today()) + 1 : 0;
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.85rem;">' +
+          '<span>' + esc(s ? s.name : '（已删）') + '</span>' +
+          '<span style="color:var(--text-muted);">' + l.leaveDate + ' 起 · ' + (days > 0 ? days + '天' : '未开始') + '</span>' +
+          '</div>';
+      });
+    }
+    var returnedList = leaves.filter(function(l) { return l.returnDate; }).sort(function(a,b) { return b.returnDate.localeCompare(a.returnDate); }).slice(0, 5);
+    if (returnedList.length > 0) {
+      html += '<div style="margin-top:14px;margin-bottom:8px;"><b style="color:var(--accent-green);">✅ 最近回营</b></div>';
+      returnedList.forEach(function(l) {
+        var s = students.find(function(x) { return x.id === l.studentId; });
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.85rem;">' +
+          '<span>' + esc(s ? s.name : '（已删）') + '</span>' +
+          '<span style="color:var(--text-muted);">' + l.leaveDate + ' ~ ' + l.returnDate + ' · 请假' + (l.effectiveDays||0) + '天</span>' +
+          '</div>';
+      });
+    }
+    if (html === '') html = '<span style="color:var(--text-muted);">暂无离营记录</span>';
+    leaveInfoDiv.innerHTML = html;
+  }
+}
 }
 
 function renderDonut(a, e, x, n) {
@@ -392,6 +420,32 @@ function renderStudents() {
     var toggleBtn = isLeft ?
       '<button class="btn btn-sm btn-green" onclick="toggleStudentActive(\'' + s.id + '\')">复课</button>' :
       '<button class="btn btn-sm btn-orange-outline" onclick="toggleStudentActive(\'' + s.id + '\')">离队</button>';
+
+    // 离营状态
+    var activeLeave = leaves.find(function(l) { return l.studentId === s.id && !l.returnDate; });
+    var leaveHtml = '';
+    if (activeLeave) {
+      var todayDate = today();
+      var leaveDays = activeLeave.leaveDate <= todayDate ? daysBetween(activeLeave.leaveDate, todayDate) + 1 : 0;
+      var effectiveDays = getLeaveEffectiveDays(leaveDays);
+      leaveHtml = '<div style="min-width:120px;">' +
+        '<div style="color:var(--accent-yellow);font-weight:600;font-size:0.85rem;">🏕️ 离营中</div>' +
+        '<div style="font-size:0.75rem;color:var(--text-muted);margin:2px 0;">' + esc(activeLeave.leaveDate) + ' 起</div>' +
+        (effectiveDays > 0 ? '<div style="font-size:0.75rem;color:var(--accent-purple);">请假' + effectiveDays + '天</div>' : '<div style="font-size:0.75rem;color:var(--text-muted);">未满2天</div>') +
+        '<button class="btn btn-sm btn-green" style="margin-top:4px;" onclick="openReturnLeaveModal(\'' + activeLeave.id + '\')">✅ 回营</button>' +
+        '</div>';
+    } else {
+      var lastLeave = leaves.filter(function(l) { return l.studentId === s.id && l.returnDate; }).sort(function(a,b) { return b.returnDate.localeCompare(a.returnDate); })[0];
+      leaveHtml = '<div style="min-width:120px;">' +
+        '<div style="color:var(--text-muted);font-size:0.85rem;">—</div>';
+      if (lastLeave) {
+        leaveHtml += '<div style="font-size:0.72rem;color:var(--text-muted);margin:2px 0;">上次：' + lastLeave.leaveDate + ' ~ ' + lastLeave.returnDate + '</div>' +
+          '<div style="font-size:0.72rem;color:var(--accent-purple);">请假' + (lastLeave.effectiveDays||0) + '天</div>';
+      }
+      leaveHtml += '<button class="btn btn-sm btn-orange-outline" style="margin-top:4px;" onclick="openStartLeaveModal(\'' + s.id + '\')">🏕️ 离营</button>' +
+        '</div>';
+    }
+
     return '<tr style="' + rowStyle + '">' +
       '<td><b>' + esc(s.name) + '</b></td>' +
       '<td>' + esc(s.phone || '-') + '</td>' +
@@ -399,6 +453,7 @@ function renderStudents() {
       '<td><span class="' + stClass + '"><span class="status-dot" style="background:' + stColor + '"></span>' + stText + '</span></td>' +
       '<td>' + expiryStr + '</td>' +
       '<td>' + (isLeft ? '-' : (leaveTotal > 0 ? '<span class="leave-badge">📅 请假' + leaveTotal + '天</span>' : '-')) + '</td>' +
+      '<td>' + leaveHtml + '</td>' +
       '<td><div class="action-btns">' +
         '<button class="btn btn-sm btn-secondary" onclick="openStudentModal(\'' + s.id + '\')">编辑</button>' +
         '<button class="btn btn-sm btn-blue" onclick="openPaymentModal(null,\'' + s.id + '\')">缴费</button>' +
@@ -977,8 +1032,10 @@ function exportCultureExcel() {
 
 // ── 离营请假 ──
 function getLeaveEffectiveDays(totalDays) {
-  if (totalDays <= 3) return 0;
-  return totalDays - 3;
+  // 前2天不计，第3天起计入（含第3天）
+  // 例如：请假2天 → 0天；请假3天 → 1天；请假5天 → 3天
+  if (totalDays < 3) return 0;
+  return totalDays - 2;
 }
 
 function renderLeaves() {
@@ -999,7 +1056,7 @@ function renderLeaves() {
   var sgrid = document.getElementById('leaveStatsGrid');
   if (sgrid) sgrid.innerHTML =
     '<div class="stat-card orange"><div class="stat-label">当前离营人数</div><div class="stat-value orange">' + awayCount + '</div><div class="stat-sub">正在请假中</div></div>' +
-    '<div class="stat-card purple"><div class="stat-label">累计有效请假天数</div><div class="stat-value purple">' + totalEffective + '</div><div class="stat-sub">已扣除3天宽限期</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">累计有效请假天数</div><div class="stat-value purple">' + totalEffective + '</div><div class="stat-sub">已扣除2天宽限期</div></div>' +
     '<div class="stat-card green"><div class="stat-label">已回营记录</div><div class="stat-value green">' + returnedList.length + '</div><div class="stat-sub">历史请假人次</div></div>' +
     '<div class="stat-card blue"><div class="stat-label">本月离营人次</div><div class="stat-value blue">' + thisMonthAway + '</div><div class="stat-sub">' + thisMonthStr + '</div></div>';
 
@@ -1130,14 +1187,14 @@ function returnLeave(id) {
   l.totalDays = totalDays;
   l.effectiveDays = effectiveDays;
   saveData();
-  renderLeaves();
+  renderStudents();
   renderDashboard();
   var s = students.find(function(x) { return x.id === l.studentId; });
   var msg = '已标记回营，离营共 ' + totalDays + ' 天';
   if (effectiveDays > 0) {
-    msg += '，计入请假 ' + effectiveDays + ' 天（已扣3天宽限）';
+    msg += '，计入请假 ' + effectiveDays + ' 天（已扣2天宽限）';
   } else {
-    msg += '，未超过3天不计入请假';
+    msg += '，未超过2天不计入请假';
   }
   showToast(msg);
 }
@@ -1146,10 +1203,100 @@ function deleteLeave(id) {
   if (!confirm('确定删除该离营记录？')) return;
   leaves = leaves.filter(function(l) { return l.id !== id; });
   saveData();
-  renderLeaves();
+  renderStudents();
   renderDashboard();
   showToast('离营记录已删除');
 }
+
+
+// ── 离营管理（学员页面集成）──
+function openStartLeaveModal(studentId) {
+  var s = students.find(function(x) { return x.id === studentId; });
+  if (!s) { showToast('学员不存在', 'error'); return; }
+  // 检查是否已在离营中
+  var existing = leaves.find(function(l) { return l.studentId === studentId && !l.returnDate; });
+  if (existing) { showToast('该学员当前已在离营中', 'error'); return; }
+  document.getElementById('startLeaveTitle').textContent = '标记离营 — ' + s.name;
+  document.getElementById('startLeaveStudentName').textContent = s.name;
+  document.getElementById('startLeaveDate').value = today();
+  // 存当前操作的学员ID
+  window._leaveStudentId = studentId;
+  openModal('startLeaveModal');
+}
+
+function confirmStartLeave() {
+  var studentId = window._leaveStudentId;
+  var leaveDate = document.getElementById('startLeaveDate').value;
+  if (!leaveDate) { showToast('请选择离营日期', 'error'); return; }
+  var s = students.find(function(x) { return x.id === studentId; });
+  leaves.push({
+    id: 'leave_' + Date.now(),
+    studentId: studentId,
+    leaveDate: leaveDate,
+    returnDate: null,
+    totalDays: 0,
+    effectiveDays: 0
+  });
+  saveData();
+  closeModal('startLeaveModal');
+  renderStudents();
+  renderDashboard();
+  showToast((s ? s.name : '学员') + ' 已标记离营（' + leaveDate + '）');
+}
+
+function openReturnLeaveModal(leaveId) {
+  var l = leaves.find(function(x) { return x.id === leaveId; });
+  if (!l) { showToast('记录不存在', 'error'); return; }
+  var s = students.find(function(x) { return x.id === l.studentId; });
+  document.getElementById('returnLeaveStudentName').textContent = s ? s.name : '';
+  document.getElementById('returnLeaveStartDate').textContent = l.leaveDate;
+  document.getElementById('returnLeaveDate').value = today();
+  // 存当前操作的离营记录ID
+  window._returnLeaveId = leaveId;
+  updateReturnLeaveCalc();
+  openModal('returnLeaveModal');
+}
+
+function updateReturnLeaveCalc() {
+  var leaveId = window._returnLeaveId;
+  var returnDate = document.getElementById('returnLeaveDate').value;
+  if (!leaveId || !returnDate) { document.getElementById('returnLeaveCalc').style.display = 'none'; return; }
+  var l = leaves.find(function(x) { return x.id === leaveId; });
+  if (!l) return;
+  var totalDays = daysBetween(l.leaveDate, returnDate) + 1;
+  if (totalDays < 1) totalDays = 1;
+  var effectiveDays = getLeaveEffectiveDays(totalDays);
+  document.getElementById('rlTotalDays').textContent = totalDays + ' 天';
+  document.getElementById('rlEffectiveDays').textContent = effectiveDays + ' 天';
+  document.getElementById('returnLeaveCalc').style.display = 'block';
+}
+
+function confirmReturnLeave() {
+  var leaveId = window._returnLeaveId;
+  var returnDate = document.getElementById('returnLeaveDate').value;
+  if (!returnDate) { showToast('请选择回营日期', 'error'); return; }
+  var l = leaves.find(function(x) { return x.id === leaveId; });
+  if (!l) return;
+  var totalDays = daysBetween(l.leaveDate, returnDate) + 1;
+  if (totalDays < 1) totalDays = 1;
+  var effectiveDays = getLeaveEffectiveDays(totalDays);
+  l.returnDate = returnDate;
+  l.totalDays = totalDays;
+  l.effectiveDays = effectiveDays;
+  saveData();
+  closeModal('returnLeaveModal');
+  renderStudents();
+  renderDashboard();
+  var s = students.find(function(x) { return x.id === l.studentId; });
+  var msg = '已标记回营，离营共 ' + totalDays + ' 天';
+  if (effectiveDays > 0) {
+    msg += '，计入请假 ' + effectiveDays + ' 天（已扣2天宽限）';
+  } else {
+    msg += '，未超过2天不计入请假';
+  }
+  showToast(msg);
+}
+
 
 function exportLeavesExcel() {
   var data = leaves.map(function(l) {
