@@ -430,7 +430,7 @@ function renderStudents() {
       leaveHtml = '<div style="min-width:120px;">' +
         '<div style="color:var(--accent-yellow);font-weight:600;font-size:0.85rem;">🏕️ 离营中</div>' +
         '<div style="font-size:0.75rem;color:var(--text-muted);margin:2px 0;">' + esc(activeLeave.leaveDate) + ' 起</div>' +
-        (effectiveDays > 0 ? '<div style="font-size:0.75rem;color:var(--accent-purple);">请假' + effectiveDays + '天</div>' : '<div style="font-size:0.75rem;color:var(--text-muted);">未满2天</div>') +
+        (effectiveDays > 0 ? '<div style="font-size:0.75rem;color:var(--accent-purple);">请假' + effectiveDays + '天</div>' : '<div style="font-size:0.75rem;color:var(--text-muted);">未满3天</div>') +
         '<button class="btn btn-sm btn-green" style="margin-top:4px;" onclick="openReturnLeaveModal(\'' + activeLeave.id + '\')">✅ 回营</button>' +
         '</div>';
     } else {
@@ -1031,10 +1031,10 @@ function exportCultureExcel() {
 
 // ── 离营请假 ──
 function getLeaveEffectiveDays(totalDays) {
-  // 前2天不计，第3天起计入（含第3天）
-  // 例如：请假2天 → 0天；请假3天 → 1天；请假5天 → 3天
-  if (totalDays < 3) return 0;
-  return totalDays - 2;
+  // 3天以内（含3天）不计入请假，超过3天则全部天数计入
+  // 例如：请假3天 → 0天；请假4天 → 4天；请假7天 → 7天
+  if (totalDays <= 3) return 0;
+  return totalDays;
 }
 
 function renderLeaves() {
@@ -1055,7 +1055,7 @@ function renderLeaves() {
   var sgrid = document.getElementById('leaveStatsGrid');
   if (sgrid) sgrid.innerHTML =
     '<div class="stat-card orange"><div class="stat-label">当前离营人数</div><div class="stat-value orange">' + awayCount + '</div><div class="stat-sub">正在请假中</div></div>' +
-    '<div class="stat-card purple"><div class="stat-label">累计有效请假天数</div><div class="stat-value purple">' + totalEffective + '</div><div class="stat-sub">已扣除2天宽限期</div></div>' +
+    '<div class="stat-card purple"><div class="stat-label">累计有效请假天数</div><div class="stat-value purple">' + totalEffective + '</div><div class="stat-sub">3天以内不计入请假天数</div></div>' +
     '<div class="stat-card green"><div class="stat-label">已回营记录</div><div class="stat-value green">' + returnedList.length + '</div><div class="stat-sub">历史请假人次</div></div>' +
     '<div class="stat-card blue"><div class="stat-label">本月离营人次</div><div class="stat-value blue">' + thisMonthAway + '</div><div class="stat-sub">' + thisMonthStr + '</div></div>';
 
@@ -1191,9 +1191,9 @@ function returnLeave(id) {
   var s = students.find(function(x) { return x.id === l.studentId; });
   var msg = '已标记回营，离营共 ' + totalDays + ' 天';
   if (effectiveDays > 0) {
-    msg += '，计入请假 ' + effectiveDays + ' 天（已扣2天宽限）';
+    msg += '，计入请假 ' + effectiveDays + ' 天（超过3天全部计入）';
   } else {
-    msg += '，未超过2天不计入请假';
+    msg += '，未超过3天不计入请假';
   }
   showToast(msg);
 }
@@ -1289,9 +1289,9 @@ function confirmReturnLeave() {
   var s = students.find(function(x) { return x.id === l.studentId; });
   var msg = '已标记回营，离营共 ' + totalDays + ' 天';
   if (effectiveDays > 0) {
-    msg += '，计入请假 ' + effectiveDays + ' 天（已扣2天宽限）';
+    msg += '，计入请假 ' + effectiveDays + ' 天（超过3天全部计入）';
   } else {
-    msg += '，未超过2天不计入请假';
+    msg += '，未超过3天不计入请假';
   }
   showToast(msg);
 }
