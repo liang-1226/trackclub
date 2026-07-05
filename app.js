@@ -301,7 +301,6 @@ function renderDashboard() {
     leaveInfoDiv.innerHTML = html;
   }
 }
-}
 
 function renderDonut(a, e, x, n) {
   var canvas = document.getElementById('donutCanvas');
