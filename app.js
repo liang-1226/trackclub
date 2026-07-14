@@ -14,6 +14,8 @@ function loadData() {
     if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || []; leaves = d.leaves || [];
       // 迁移：给没有 active 字段的学员补上
       students.forEach(function(s) { if (s.active === undefined) s.active = true; });
+      // 合并新增学员
+      mergeNewStudents();
       return; }
   } catch(e) {}
   // 从旧版迁移数据
@@ -37,7 +39,35 @@ function loadData() {
     localStorage.removeItem('trackclub_data_v3');
     localStorage.removeItem('trackclub_data_v2');
     initDemoData();
+  } else {
+    mergeNewStudents();
   }
+}
+
+// 合并新增学员（已有数据时自动补充新学员）
+function mergeNewStudents() {
+  var newNames = [
+    {id:'stu_29',name:'罗涛'},
+    {id:'stu_30',name:'刘鸿颉'},
+    {id:'stu_31',name:'戴永彪'},
+    {id:'stu_32',name:'杨佳澳'},
+    {id:'stu_33',name:'苏庭晟'},
+    {id:'stu_34',name:'勾莘然'},
+    {id:'stu_35',name:'李胜宇'},
+    {id:'stu_36',name:'張子謙(台湾)'},
+    {id:'stu_37',name:'刘芮辰'},
+    {id:'stu_38',name:'咸竣宁'},
+    {id:'stu_39',name:'陈得新'}
+  ];
+  var existingNames = students.map(function(s) { return s.name; });
+  var updated = false;
+  newNames.forEach(function(n) {
+    if (existingNames.indexOf(n.name) === -1) {
+      students.push({id:n.id,name:n.name,phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'});
+      updated = true;
+    }
+  });
+  if (updated) saveData();
 }
 
 function initDemoData() {
@@ -69,7 +99,18 @@ function initDemoData() {
     {id:'stu_25',name:'范金宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-21'},
     {id:'stu_26',name:'万子钦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-20'},
     {id:'stu_27',name:'王境凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-11'},
-    {id:'stu_28',name:'刘毅扬',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-03'}
+    {id:'stu_28',name:'刘毅扬',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-03'},
+    {id:'stu_29',name:'罗涛',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_30',name:'刘鸿颉',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_31',name:'戴永彪',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_32',name:'杨佳澳',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_33',name:'苏庭晟',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_34',name:'勾莘然',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_35',name:'李胜宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_36',name:'張子謙(台湾)',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_37',name:'刘芮辰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_38',name:'咸竣宁',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_39',name:'陈得新',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'}
   ];
   payments = [
     {id:'pay_1',studentId:'stu_1',amount:4200,date:'2026-06-05',days:30,leaveDays:0,expiry:'2026-07-05',note:''},
