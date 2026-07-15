@@ -57,7 +57,27 @@ function mergeNewStudents() {
     {id:'stu_36',name:'張子謙(台湾)'},
     {id:'stu_37',name:'刘芮辰'},
     {id:'stu_38',name:'咸竣宁'},
-    {id:'stu_39',name:'陈得新'}
+    {id:'stu_39',name:'陈得新'},
+    {id:'stu_40',name:'徐伟哲'},
+    {id:'stu_41',name:'刘镇源'},
+    {id:'stu_42',name:'吴家盛'},
+    {id:'stu_43',name:'杜优博'},
+    {id:'stu_44',name:'黄鑫哲'},
+    {id:'stu_45',name:'白静纯'},
+    {id:'stu_46',name:'于浩然'},
+    {id:'stu_47',name:'房久程'},
+    {id:'stu_48',name:'吕依瑶'},
+    {id:'stu_49',name:'林雨馨'},
+    {id:'stu_50',name:'王荣露'},
+    {id:'stu_51',name:'申佳明'},
+    {id:'stu_52',name:'万俊昊'},
+    {id:'stu_53',name:'吕文双'},
+    {id:'stu_54',name:'刘睿'},
+    {id:'stu_55',name:'石瑾瑜'},
+    {id:'stu_56',name:'李旭升'},
+    {id:'stu_57',name:'郭念祖'},
+    {id:'stu_58',name:'贾誉'},
+    {id:'stu_59',name:'徐子润'}
   ];
   var existingNames = students.map(function(s) { return s.name; });
   var updated = false;
@@ -110,7 +130,27 @@ function initDemoData() {
     {id:'stu_36',name:'張子謙(台湾)',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
     {id:'stu_37',name:'刘芮辰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
     {id:'stu_38',name:'咸竣宁',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_39',name:'陈得新',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'}
+    {id:'stu_39',name:'陈得新',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_40',name:'徐伟哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_41',name:'刘镇源',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_42',name:'吴家盛',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_43',name:'杜优博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_44',name:'黄鑫哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_45',name:'白静纯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_46',name:'于浩然',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_47',name:'房久程',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_48',name:'吕依瑶',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_49',name:'林雨馨',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_50',name:'王荣露',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_51',name:'申佳明',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_52',name:'万俊昊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_53',name:'吕文双',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_54',name:'刘睿',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_55',name:'石瑾瑜',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_56',name:'李旭升',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_57',name:'郭念祖',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_58',name:'贾誉',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
+    {id:'stu_59',name:'徐子润',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'}
   ];
   payments = [
     {id:'pay_1',studentId:'stu_1',amount:4200,date:'2026-06-05',days:30,leaveDays:0,expiry:'2026-07-05',note:''},
