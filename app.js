@@ -16,6 +16,8 @@ function loadData() {
       students.forEach(function(s) { if (s.active === undefined) s.active = true; });
       // 合并新增学员
       mergeNewStudents();
+      // 合并批量缴费
+      mergePayments();
       return; }
   } catch(e) {}
   // 从旧版迁移数据
@@ -41,6 +43,7 @@ function loadData() {
     initDemoData();
   } else {
     mergeNewStudents();
+    mergePayments();
   }
 }
 
@@ -106,7 +109,17 @@ function mergeNewStudents() {
     {id:'stu_85',name:'段政卿'},
     {id:'stu_86',name:'高世杰'},
     {id:'stu_87',name:'谭明智'},
-    {id:'stu_88',name:'白一航'}
+    {id:'stu_88',name:'白一航'},
+    {id:'stu_89',name:'章文阅'},
+    {id:'stu_90',name:'温咏琦'},
+    {id:'stu_91',name:'李常硕'},
+    {id:'stu_92',name:'黄嘉哲'},
+    {id:'stu_93',name:'占海歌'},
+    {id:'stu_94',name:'庞博文'},
+    {id:'stu_95',name:'冯俊轩'},
+    {id:'stu_96',name:'潘昶润'},
+    {id:'stu_97',name:'曲振华'},
+    {id:'stu_98',name:'王正哲'}
   ];
   var existingNames = students.map(function(s) { return s.name; });
   var updated = false;
@@ -115,6 +128,65 @@ function mergeNewStudents() {
       students.push({id:n.id,name:n.name,phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'});
       updated = true;
     }
+  });
+  if (updated) saveData();
+}
+
+// 批量注入缴费记录（只对尚无缴费记录的学员创建）
+function mergePayments() {
+  var mapping = [
+    {name:'章文阅',amount:5500},{name:'温咏琦',amount:5000},{name:'李常硕',amount:5500},
+    {name:'刘鸿颉',amount:5500},{name:'黄嘉哲',amount:5000},{name:'杨佳澳',amount:5000},
+    {name:'苏庭晟',amount:5000},{name:'勾莘然',amount:5000},{name:'李胜宇',amount:5500},
+    {name:'張子謙(台湾)',amount:5500},{name:'刘芮辰',amount:5500},{name:'咸竣宁',amount:5500},
+    {name:'戴永彪',amount:5500},{name:'徐伟哲',amount:3800},{name:'刘镇源',amount:5500},
+    {name:'吴家盛',amount:5500},{name:'杜优博',amount:5000},{name:'黄鑫哲',amount:5500},
+    {name:'白静纯',amount:5500},{name:'于浩然',amount:5500},{name:'房久程',amount:3300},
+    {name:'吕依瑶',amount:5500},{name:'林雨馨',amount:3700},{name:'王荣露',amount:5500},
+    {name:'申佳明',amount:5500},{name:'万俊昊',amount:5500},{name:'吕文双',amount:5500},
+    {name:'刘睿',amount:5500},{name:'石瑾瑜',amount:5000},{name:'李旭升',amount:5000},
+    {name:'郭念祖',amount:5000},{name:'贾誉',amount:4500},{name:'徐子润',amount:5500},
+    {name:'占海歌',amount:5500},{name:'吴东烨',amount:5500},{name:'王梓骁',amount:4500},
+    {name:'刘阳',amount:5500},{name:'张锡鑫',amount:5500},{name:'尤艺凯',amount:5500},
+    {name:'王宁',amount:5500},{name:'王卓楦',amount:5500},{name:'李君昊',amount:5500},
+    {name:'郑光远',amount:5000},{name:'何旭',amount:5000},{name:'苏恒',amount:5000},
+    {name:'常红磊',amount:5000},{name:'徐子涵',amount:5000},{name:'杨熙',amount:4500},
+    {name:'林炎皓',amount:5000},{name:'刘晋宇',amount:5000},{name:'张新宇',amount:5000},
+    {name:'符磊',amount:5500},{name:'张辰宏',amount:5000},{name:'冯铄淇',amount:5000},
+    {name:'孙宇菲',amount:5000},{name:'焦明罡',amount:3700},{name:'张亚鹏',amount:5000},
+    {name:'李明翰',amount:5000},{name:'高子濠',amount:5500},{name:'段政卿',amount:7300},
+    {name:'高世杰',amount:5500},{name:'谭明智',amount:5500},{name:'白一航',amount:5500},
+    {name:'庞博文',amount:3300},{name:'冯俊轩',amount:5500},{name:'潘昶润',amount:4500},
+    {name:'曲振华',amount:5500},{name:'王正哲',amount:5500}
+  ];
+  var maxPay = 0;
+  payments.forEach(function(p) {
+    var m = p.id.match(/pay_(\d+)/);
+    if (m) { var n = parseInt(m[1],10); if (n > maxPay) maxPay = n; }
+  });
+  var nextId = maxPay + 1;
+  var updated = false;
+  mapping.forEach(function(m) {
+    var s = students.find(function(x) { return x.name === m.name; });
+    if (!s) return;
+    var existing = payments.filter(function(p) { return p.studentId === s.id; });
+    if (existing.length > 0) return;
+    var date = '2026-07-29';
+    var days = 30;
+    var expDate = new Date(date);
+    expDate.setDate(expDate.getDate() + days);
+    var expiry = expDate.toISOString().substring(0,10);
+    payments.push({
+      id:'pay_' + (nextId++),
+      studentId:s.id,
+      amount:m.amount,
+      date:date,
+      days:days,
+      leaveDays:0,
+      expiry:expiry,
+      note:''
+    });
+    updated = true;
   });
   if (updated) saveData();
 }
@@ -208,7 +280,17 @@ function initDemoData() {
     {id:'stu_85',name:'段政卿',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
     {id:'stu_86',name:'高世杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
     {id:'stu_87',name:'谭明智',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_88',name:'白一航',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'}
+    {id:'stu_88',name:'白一航',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
+    {id:'stu_89',name:'章文阅',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_90',name:'温咏琦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_91',name:'李常硕',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_92',name:'黄嘉哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_93',name:'占海歌',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_94',name:'庞博文',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_95',name:'冯俊轩',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_96',name:'潘昶润',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_97',name:'曲振华',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
+    {id:'stu_98',name:'王正哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'}
   ];
   payments = [
     {id:'pay_1',studentId:'stu_1',amount:4200,date:'2026-06-05',days:30,leaveDays:0,expiry:'2026-07-05',note:''},
