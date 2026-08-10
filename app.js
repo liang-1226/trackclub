@@ -1059,6 +1059,9 @@ function renderCulture() {
       '<td>' + (daily !== '-' ? '¥' + daily : '-') + '</td>' +
       '<td><span class="' + stClass + '"><span class="status-dot" style="background:' + (st.status==='active'?'var(--accent-green)':st.status==='expiring'?'var(--accent-yellow)':'var(--accent-red)') + '"></span>' + stText + '</span></td>' +
       '<td><div class="action-btns">' +
+        (st.status === 'expired' || st.status === 'expiring'
+          ? '<button class="btn btn-sm btn-orange-outline" onclick="openCultureModal(null,\'' + cp.studentId + '\')">续费</button>'
+          : '<button class="btn btn-sm btn-blue" onclick="openCultureModal(null,\'' + cp.studentId + '\')">缴费</button>') +
         '<button class="btn btn-sm btn-secondary" onclick="openCultureModal(\'' + cp.id + '\')">编辑</button>' +
         '<button class="btn btn-sm btn-danger" onclick="deleteCulture(\'' + cp.id + '\')">删除</button>' +
       '</div></td>' +
@@ -1115,12 +1118,13 @@ function onSubjectCheck() {
   }
 }
 
-function openCultureModal(id) {
+function openCultureModal(id, sid) {
   editingCultureId = id || null;
   var title = document.getElementById('cultureModalTitle');
   if (title) title.textContent = id ? '编辑文化课缴费' : '新增文化课缴费';
   var sel = document.getElementById('cStudentId');
   if (sel) sel.innerHTML = students.map(function(s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; }).join('');
+  if (sid && sel) sel.value = sid;
   if (id) {
     var cp = culturePayments.find(function(x) { return x.id === id; });
     if (cp) {
