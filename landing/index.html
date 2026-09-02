@@ -14,7 +14,14 @@
       const issue = rows[1]?.querySelector('.active')?.textContent?.trim() || '途中跑散';
       const advice = document.querySelector('.advice');
       const title = advice?.querySelector('h3');
+      const copy = advice?.querySelector('p');
+      const directions = {
+        '起跑慢': '先测前 10—30 米分段。训练重点放在起跑设置、第一步方向和水平发力。',
+        '途中跑散': '先看高速跑姿。训练重点放在髋部位移、支撑刚性与上下肢节奏。',
+        '后程掉速': '先测后程速度衰减。训练重点放在速度耐力、放松能力与跑动经济性。'
+      };
       if (title) title.textContent = event + ' · ' + issue;
+      if (copy) copy.textContent = directions[issue] || directions['途中跑散'];
       advice?.classList.add('show');
     });
   })();
