@@ -1,5 +1,5 @@
 /* 精准田径俱乐部 - 核心逻辑 */
-const STORAGE_KEY = 'trackclub_data_v8';
+const STORAGE_KEY = 'trackclub_data_v9';
 let students = [], payments = [], culturePayments = [], leaves = [];
 let editingStudentId = null, editingPaymentId = null, editingCultureId = null;
 let studentFilter = 'all', studentPage = 1, STUDENTS_PER_PAGE = 15;
@@ -80,9 +80,9 @@ function initDemoData() {
     {id:"stu_18",name:"于笑唯",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-19"},
     {id:"stu_19",name:"肖培宇",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-15"},
     {id:"stu_20",name:"张贻硕",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-18"},
-    {id:"stu_21",name:"卢泽吉",phone:"",event:"田径训练",note:"原写6500=训练5500+文化1000，请核对",active:true,createdAt:"2026-11-09"},
+    {id:"stu_21",name:"卢泽吉",phone:"",event:"田径训练",note:"6500=训练5500+文化1000，文化课包含",active:true,createdAt:"2026-11-09"},
     {id:"stu_22",name:"黄文杰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-26"},
-    {id:"stu_23",name:"李儆华",phone:"",event:"田径训练",note:"文化+训练合计15000，仅知到期1.05，起始日未提供",active:true,createdAt:""},
+    {id:"stu_23",name:"李儆华",phone:"",event:"田径训练",note:"文化+训练合计15000，3个月(10.05-1.05)",active:true,createdAt:"2026-10-05"},
     {id:"stu_24",name:"周泽勋",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-28"},
     {id:"stu_25",name:"苏星宇",phone:"",event:"田径训练",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对",active:true,createdAt:"2026-11-08"},
     {id:"stu_26",name:"黄家豪",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-16"},
@@ -93,7 +93,7 @@ function initDemoData() {
     {id:"stu_31",name:"孔春博",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-25"},
     {id:"stu_32",name:"杨丹",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
     {id:"stu_33",name:"毕鹏程",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
-    {id:"stu_34",name:"韩雨琪",phone:"",event:"田径训练",note:"原写10.24-10.25仅1天，请核对",active:true,createdAt:"2026-10-24"},
+    {id:"stu_34",name:"韩雨琪",phone:"",event:"田径训练",note:"10.24-11.24",active:true,createdAt:"2026-10-24"},
     {id:"stu_35",name:"张瑞",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-14"},
     {id:"stu_36",name:"郑允祺",phone:"",event:"田径训练",note:"文化课全部包含，体考结束；金额未提供",active:true,createdAt:""}
   ];
@@ -118,9 +118,9 @@ function initDemoData() {
     {id:"pay_18",studentId:"stu_18",amount:4500,date:"2026-11-19",days:30,leaveDays:0,expiry:"2026-12-19",note:"仅写文化日期，作总体日期"},
     {id:"pay_19",studentId:"stu_19",amount:3000,date:"2026-11-15",days:30,leaveDays:0,expiry:"2026-12-15",note:""},
     {id:"pay_20",studentId:"stu_20",amount:5500,date:"2026-11-18",days:30,leaveDays:0,expiry:"2026-12-18",note:""},
-    {id:"pay_21",studentId:"stu_21",amount:5500,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:"原写6500=训练5500+文化1000，请核对"},
+    {id:"pay_21",studentId:"stu_21",amount:5500,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:"文化课费已包含(另见文化课1000)"},
     {id:"pay_22",studentId:"stu_22",amount:5500,date:"2026-10-26",days:31,leaveDays:0,expiry:"2026-11-26",note:""},
-    {id:"pay_23",studentId:"stu_23",amount:15000,date:"",days:0,leaveDays:0,expiry:"2027-01-05",note:"文化+训练合计15000，仅知到期1.05，起始日未提供"},
+    {id:"pay_23",studentId:"stu_23",amount:15000,date:"2026-10-05",days:92,leaveDays:0,expiry:"2027-01-05",note:"文化+训练合计15000，3个月，文化课包含在内"},
     {id:"pay_24",studentId:"stu_24",amount:3500,date:"2026-10-28",days:31,leaveDays:0,expiry:"2026-11-28",note:""},
     {id:"pay_25",studentId:"stu_25",amount:3000,date:"2026-11-08",days:30,leaveDays:0,expiry:"2026-12-08",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对"},
     {id:"pay_26",studentId:"stu_26",amount:4000,date:"2026-10-16",days:31,leaveDays:0,expiry:"2026-11-16",note:""},
@@ -131,7 +131,7 @@ function initDemoData() {
     {id:"pay_31",studentId:"stu_31",amount:4500,date:"2026-10-25",days:31,leaveDays:0,expiry:"2026-11-25",note:""},
     {id:"pay_32",studentId:"stu_32",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
     {id:"pay_33",studentId:"stu_33",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
-    {id:"pay_34",studentId:"stu_34",amount:4000,date:"2026-10-24",days:1,leaveDays:0,expiry:"2026-10-25",note:"原写10.24-10.25仅1天，请核对"},
+    {id:"pay_34",studentId:"stu_34",amount:4000,date:"2026-10-24",days:31,leaveDays:0,expiry:"2026-11-24",note:"10.24-11.24"},
     {id:"pay_35",studentId:"stu_35",amount:5500,date:"2026-11-14",days:30,leaveDays:0,expiry:"2026-12-14",note:""},
     {id:"pay_36",studentId:"stu_36",amount:0,date:"",days:0,leaveDays:0,expiry:"2027-05-13",note:"文化课全部包含，体考结束；金额未提供"}
   ];
