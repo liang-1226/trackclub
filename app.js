@@ -1,5 +1,5 @@
 /* 精准田径俱乐部 - 核心逻辑 */
-const STORAGE_KEY = 'trackclub_data_v6';
+const STORAGE_KEY = 'trackclub_data_v7';
 let students = [], payments = [], culturePayments = [], leaves = [];
 let editingStudentId = null, editingPaymentId = null, editingCultureId = null;
 let studentFilter = 'all', studentPage = 1, STUDENTS_PER_PAGE = 15;
@@ -48,280 +48,112 @@ function loadData() {
 }
 
 // 合并新增学员（已有数据时自动补充新学员）
-function mergeNewStudents() {
-  var newNames = [
-    {id:'stu_29',name:'罗涛'},
-    {id:'stu_30',name:'刘鸿颉'},
-    {id:'stu_31',name:'戴永彪'},
-    {id:'stu_32',name:'杨佳澳'},
-    {id:'stu_33',name:'苏庭晟'},
-    {id:'stu_34',name:'勾莘然'},
-    {id:'stu_35',name:'李胜宇'},
-    {id:'stu_36',name:'張子謙(台湾)'},
-    {id:'stu_37',name:'刘芮辰'},
-    {id:'stu_38',name:'咸竣宁'},
-    {id:'stu_39',name:'陈得新'},
-    {id:'stu_40',name:'徐伟哲'},
-    {id:'stu_41',name:'刘镇源'},
-    {id:'stu_42',name:'吴家盛'},
-    {id:'stu_43',name:'杜优博'},
-    {id:'stu_44',name:'黄鑫哲'},
-    {id:'stu_45',name:'白静纯'},
-    {id:'stu_46',name:'于浩然'},
-    {id:'stu_47',name:'房久程'},
-    {id:'stu_48',name:'吕依瑶'},
-    {id:'stu_49',name:'林雨馨'},
-    {id:'stu_50',name:'王荣露'},
-    {id:'stu_51',name:'申佳明'},
-    {id:'stu_52',name:'万俊昊'},
-    {id:'stu_53',name:'吕文双'},
-    {id:'stu_54',name:'刘睿'},
-    {id:'stu_55',name:'石瑾瑜'},
-    {id:'stu_56',name:'李旭升'},
-    {id:'stu_57',name:'郭念祖'},
-    {id:'stu_58',name:'贾誉'},
-    {id:'stu_59',name:'徐子润'},
-    {id:'stu_60',name:'吴东烨'},
-    {id:'stu_61',name:'王梓骁'},
-    {id:'stu_62',name:'刘阳'},
-    {id:'stu_63',name:'张锡鑫'},
-    {id:'stu_64',name:'尤艺凯'},
-    {id:'stu_65',name:'王宁'},
-    {id:'stu_66',name:'王卓楦'},
-    {id:'stu_67',name:'李君昊'},
-    {id:'stu_68',name:'郑光远'},
-    {id:'stu_69',name:'何旭'},
-    {id:'stu_70',name:'苏恒'},
-    {id:'stu_71',name:'常红磊'},
-    {id:'stu_72',name:'徐子涵'},
-    {id:'stu_73',name:'杨熙'},
-    {id:'stu_74',name:'林炎皓'},
-    {id:'stu_75',name:'刘晋宇'},
-    {id:'stu_76',name:'张新宇'},
-    {id:'stu_77',name:'符磊'},
-    {id:'stu_78',name:'张辰宏'},
-    {id:'stu_79',name:'冯铄淇'},
-    {id:'stu_80',name:'孙宇菲'},
-    {id:'stu_81',name:'焦明罡'},
-    {id:'stu_82',name:'张亚鹏'},
-    {id:'stu_83',name:'李明翰'},
-    {id:'stu_84',name:'高子濠'},
-    {id:'stu_85',name:'段政卿'},
-    {id:'stu_86',name:'高世杰'},
-    {id:'stu_87',name:'谭明智'},
-    {id:'stu_88',name:'白一航'},
-    {id:'stu_89',name:'章文阅'},
-    {id:'stu_90',name:'温咏琦'},
-    {id:'stu_91',name:'李常硕'},
-    {id:'stu_92',name:'黄嘉哲'},
-    {id:'stu_93',name:'占海歌'},
-    {id:'stu_94',name:'庞博文'},
-    {id:'stu_95',name:'冯俊轩'},
-    {id:'stu_96',name:'潘昶润'},
-    {id:'stu_97',name:'曲振华'},
-    {id:'stu_98',name:'王正哲'}
-  ];
-  var existingNames = students.map(function(s) { return s.name; });
-  var updated = false;
-  newNames.forEach(function(n) {
-    if (existingNames.indexOf(n.name) === -1) {
-      students.push({id:n.id,name:n.name,phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'});
-      updated = true;
-    }
-  });
-  if (updated) saveData();
-}
 
 // 批量注入缴费记录（只对尚无缴费记录的学员创建）
+function mergeNewStudents() {
+  // 名单已内置于 initDemoData，无需合并旧学员
+}
+
 function mergePayments() {
-  var mapping = [
-    {name:'章文阅',amount:5500},{name:'温咏琦',amount:5000},{name:'李常硕',amount:5500},
-    {name:'刘鸿颉',amount:5500},{name:'黄嘉哲',amount:5000},{name:'杨佳澳',amount:5000},
-    {name:'苏庭晟',amount:5000},{name:'勾莘然',amount:5000},{name:'李胜宇',amount:5500},
-    {name:'張子謙(台湾)',amount:5500},{name:'刘芮辰',amount:5500},{name:'咸竣宁',amount:5500},
-    {name:'戴永彪',amount:5500},{name:'徐伟哲',amount:3800},{name:'刘镇源',amount:5500},
-    {name:'吴家盛',amount:5500},{name:'杜优博',amount:5000},{name:'黄鑫哲',amount:5500},
-    {name:'白静纯',amount:5500},{name:'于浩然',amount:5500},{name:'房久程',amount:3300},
-    {name:'吕依瑶',amount:5500},{name:'林雨馨',amount:3700},{name:'王荣露',amount:5500},
-    {name:'申佳明',amount:5500},{name:'万俊昊',amount:5500},{name:'吕文双',amount:5500},
-    {name:'刘睿',amount:5500},{name:'石瑾瑜',amount:5000},{name:'李旭升',amount:5000},
-    {name:'郭念祖',amount:5000},{name:'贾誉',amount:4500},{name:'徐子润',amount:5500},
-    {name:'占海歌',amount:5500},{name:'吴东烨',amount:5500},{name:'王梓骁',amount:4500},
-    {name:'刘阳',amount:5500},{name:'张锡鑫',amount:5500},{name:'尤艺凯',amount:5500},
-    {name:'王宁',amount:5500},{name:'王卓楦',amount:5500},{name:'李君昊',amount:5500},
-    {name:'郑光远',amount:5000},{name:'何旭',amount:5000},{name:'苏恒',amount:5000},
-    {name:'常红磊',amount:5000},{name:'徐子涵',amount:5000},{name:'杨熙',amount:4500},
-    {name:'林炎皓',amount:5000},{name:'刘晋宇',amount:5000},{name:'张新宇',amount:5000},
-    {name:'符磊',amount:5500},{name:'张辰宏',amount:5000},{name:'冯铄淇',amount:5000},
-    {name:'孙宇菲',amount:5000},{name:'焦明罡',amount:3700},{name:'张亚鹏',amount:5000},
-    {name:'李明翰',amount:5000},{name:'高子濠',amount:5500},{name:'段政卿',amount:7300},
-    {name:'高世杰',amount:5500},{name:'谭明智',amount:5500},{name:'白一航',amount:5500},
-    {name:'庞博文',amount:3300},{name:'冯俊轩',amount:5500},{name:'潘昶润',amount:4500},
-    {name:'曲振华',amount:5500},{name:'王正哲',amount:5500}
-  ];
-  var maxPay = 0;
-  payments.forEach(function(p) {
-    var m = p.id.match(/pay_(\d+)/);
-    if (m) { var n = parseInt(m[1],10); if (n > maxPay) maxPay = n; }
-  });
-  var nextId = maxPay + 1;
-  var updated = false;
-  mapping.forEach(function(m) {
-    var s = students.find(function(x) { return x.name === m.name; });
-    if (!s) return;
-    var existing = payments.filter(function(p) { return p.studentId === s.id; });
-    if (existing.length > 0) return;
-    var date = '2026-07-29';
-    var days = 30;
-    var expDate = new Date(date);
-    expDate.setDate(expDate.getDate() + days);
-    var expiry = expDate.toISOString().substring(0,10);
-    payments.push({
-      id:'pay_' + (nextId++),
-      studentId:s.id,
-      amount:m.amount,
-      date:date,
-      days:days,
-      leaveDays:0,
-      expiry:expiry,
-      note:''
-    });
-    updated = true;
-  });
-  if (updated) saveData();
+  // 缴费已内置于 initDemoData，无需合并旧缴费
 }
 
 function initDemoData() {
   students = [
-    {id:'stu_1',name:'王宏博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-05'},
-    {id:'stu_2',name:'王宏杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-09'},
-    {id:'stu_3',name:'张圆晟',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-20'},
-    {id:'stu_4',name:'白云升',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
-    {id:'stu_5',name:'王浦瀚',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-04-22'},
-    {id:'stu_6',name:'李佳泽',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-16'},
-    {id:'stu_7',name:'范承昊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-12'},
-    {id:'stu_8',name:'于笑唯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-20'},
-    {id:'stu_9',name:'赵森',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-27'},
-    {id:'stu_10',name:'马煜博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
-    {id:'stu_11',name:'胡曦元',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-01'},
-    {id:'stu_12',name:'孙嘉诚',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-15'},
-    {id:'stu_13',name:'赵则语',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-09'},
-    {id:'stu_14',name:'彭帅凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-02'},
-    {id:'stu_15',name:'邸薪宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-07'},
-    {id:'stu_16',name:'闫硕',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-17'},
-    {id:'stu_17',name:'肖培宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-02'},
-    {id:'stu_18',name:'成坤',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-28'},
-    {id:'stu_19',name:'张智博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-14'},
-    {id:'stu_20',name:'梁弘杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-06'},
-    {id:'stu_21',name:'郑允祺',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-14'},
-    {id:'stu_22',name:'周瑾',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-07'},
-    {id:'stu_23',name:'李昊森',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-18'},
-    {id:'stu_24',name:'孙浩博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-17'},
-    {id:'stu_25',name:'范金宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-05-21'},
-    {id:'stu_26',name:'万子钦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-20'},
-    {id:'stu_27',name:'王境凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-11'},
-    {id:'stu_28',name:'刘毅扬',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-06-03'},
-    {id:'stu_29',name:'罗涛',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_30',name:'刘鸿颉',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_31',name:'戴永彪',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_32',name:'杨佳澳',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_33',name:'苏庭晟',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_34',name:'勾莘然',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_35',name:'李胜宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_36',name:'張子謙(台湾)',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_37',name:'刘芮辰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_38',name:'咸竣宁',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_39',name:'陈得新',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_40',name:'徐伟哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_41',name:'刘镇源',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_42',name:'吴家盛',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_43',name:'杜优博',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_44',name:'黄鑫哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_45',name:'白静纯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_46',name:'于浩然',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_47',name:'房久程',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_48',name:'吕依瑶',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_49',name:'林雨馨',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_50',name:'王荣露',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_51',name:'申佳明',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_52',name:'万俊昊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_53',name:'吕文双',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_54',name:'刘睿',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_55',name:'石瑾瑜',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_56',name:'李旭升',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_57',name:'郭念祖',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_58',name:'贾誉',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_59',name:'徐子润',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-15'},
-    {id:'stu_60',name:'吴东烨',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_61',name:'王梓骁',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_62',name:'刘阳',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_63',name:'张锡鑫',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_64',name:'尤艺凯',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_65',name:'王宁',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_66',name:'王卓楦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_67',name:'李君昊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_68',name:'郑光远',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_69',name:'何旭',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_70',name:'苏恒',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_71',name:'常红磊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_72',name:'徐子涵',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_73',name:'杨熙',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_74',name:'林炎皓',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_75',name:'刘晋宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_76',name:'张新宇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_77',name:'符磊',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_78',name:'张辰宏',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_79',name:'冯铄淇',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_80',name:'孙宇菲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_81',name:'焦明罡',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_82',name:'张亚鹏',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_83',name:'李明翰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_84',name:'高子濠',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_85',name:'段政卿',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_86',name:'高世杰',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_87',name:'谭明智',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_88',name:'白一航',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-22'},
-    {id:'stu_89',name:'章文阅',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_90',name:'温咏琦',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_91',name:'李常硕',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_92',name:'黄嘉哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_93',name:'占海歌',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_94',name:'庞博文',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_95',name:'冯俊轩',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_96',name:'潘昶润',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_97',name:'曲振华',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'},
-    {id:'stu_98',name:'王正哲',phone:'',event:'田径训练',note:'',active:true,createdAt:'2026-07-29'}
+    {id:"stu_1",name:"万子钦",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-01"},
+    {id:"stu_2",name:"刘毅扬",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-01"},
+    {id:"stu_3",name:"孙浩博",phone:"",event:"田径训练",note:"跨年到期",active:true,createdAt:"2026-11-19"},
+    {id:"stu_4",name:"王书禹",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-27"},
+    {id:"stu_5",name:"余森",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-27"},
+    {id:"stu_6",name:"朱本嵩",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-01"},
+    {id:"stu_7",name:"宫景泰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-22"},
+    {id:"stu_8",name:"胡东辰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-10"},
+    {id:"stu_9",name:"马川",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-05"},
+    {id:"stu_10",name:"李昭洋",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-22"},
+    {id:"stu_11",name:"郭俊杰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-15"},
+    {id:"stu_12",name:"王宏杰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-28"},
+    {id:"stu_13",name:"王宏博",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-09"},
+    {id:"stu_14",name:"王鑫哲",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-30"},
+    {id:"stu_15",name:"阿乙思太",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-03"},
+    {id:"stu_16",name:"邓铭哲",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-09"},
+    {id:"stu_17",name:"王浦涵",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-27"},
+    {id:"stu_18",name:"于笑唯",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-19"},
+    {id:"stu_19",name:"肖培宇",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-15"},
+    {id:"stu_20",name:"张贻硕",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-18"},
+    {id:"stu_21",name:"卢泽吉",phone:"",event:"田径训练",note:"原写6500=训练5500+文化1000，请核对",active:true,createdAt:"2026-11-09"},
+    {id:"stu_22",name:"黄文杰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-26"},
+    {id:"stu_23",name:"李儆华",phone:"",event:"田径训练",note:"文化+训练合计15000，仅知到期1.05，起始日未提供",active:true,createdAt:""},
+    {id:"stu_24",name:"周泽勋",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-28"},
+    {id:"stu_25",name:"苏星宇",phone:"",event:"田径训练",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对",active:true,createdAt:"2026-11-08"},
+    {id:"stu_26",name:"黄家豪",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-16"},
+    {id:"stu_27",name:"张嘉桐",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-06"},
+    {id:"stu_28",name:"李铭浩",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
+    {id:"stu_29",name:"赵博楠",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
+    {id:"stu_30",name:"马庆野",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
+    {id:"stu_31",name:"孔春博",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-25"},
+    {id:"stu_32",name:"杨丹",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
+    {id:"stu_33",name:"毕鹏程",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
+    {id:"stu_34",name:"韩雨琪",phone:"",event:"田径训练",note:"原写10.24-10.25仅1天，请核对",active:true,createdAt:"2026-10-24"},
+    {id:"stu_35",name:"张瑞",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-14"},
+    {id:"stu_36",name:"郑允棋",phone:"",event:"田径训练",note:"文化课全部包含，体考结束；金额未提供",active:true,createdAt:""}
   ];
   payments = [
-    {id:'pay_1',studentId:'stu_1',amount:4200,date:'2026-06-05',days:30,leaveDays:0,expiry:'2026-07-05',note:''},
-    {id:'pay_2',studentId:'stu_2',amount:3000,date:'2026-06-09',days:30,leaveDays:0,expiry:'2026-07-09',note:''},
-    {id:'pay_3',studentId:'stu_3',amount:3000,date:'2026-05-20',days:31,leaveDays:0,expiry:'2026-06-20',note:''},
-    {id:'pay_4',studentId:'stu_4',amount:4500,date:'2026-06-01',days:30,leaveDays:0,expiry:'2026-07-01',note:''},
-    {id:'pay_5',studentId:'stu_5',amount:4500,date:'2026-04-22',days:30,leaveDays:0,expiry:'2026-05-22',note:''},
-    {id:'pay_6',studentId:'stu_6',amount:3000,date:'2026-06-16',days:30,leaveDays:0,expiry:'2026-07-16',note:''},
-    {id:'pay_7',studentId:'stu_7',amount:4500,date:'2026-06-12',days:30,leaveDays:0,expiry:'2026-07-12',note:''},
-    {id:'pay_8',studentId:'stu_8',amount:4500,date:'2026-05-20',days:31,leaveDays:0,expiry:'2026-06-20',note:''},
-    {id:'pay_9',studentId:'stu_9',amount:6500,date:'2026-05-27',days:45,leaveDays:0,expiry:'2026-07-11',note:''},
-    {id:'pay_10',studentId:'stu_10',amount:13500,date:'2026-06-01',days:92,leaveDays:0,expiry:'2026-09-01',note:''},
-    {id:'pay_11',studentId:'stu_11',amount:4000,date:'2026-06-01',days:30,leaveDays:0,expiry:'2026-07-01',note:''},
-    {id:'pay_12',studentId:'stu_12',amount:5500,date:'2026-06-15',days:30,leaveDays:0,expiry:'2026-07-15',note:''},
-    {id:'pay_13',studentId:'stu_13',amount:5500,date:'2026-06-09',days:30,leaveDays:0,expiry:'2026-07-09',note:''},
-    {id:'pay_14',studentId:'stu_14',amount:5500,date:'2026-06-02',days:30,leaveDays:0,expiry:'2026-07-02',note:''},
-    {id:'pay_15',studentId:'stu_15',amount:5000,date:'2026-06-07',days:30,leaveDays:0,expiry:'2026-07-07',note:''},
-    {id:'pay_16',studentId:'stu_16',amount:3000,date:'2026-06-17',days:30,leaveDays:0,expiry:'2026-07-17',note:''},
-    {id:'pay_17',studentId:'stu_17',amount:3000,date:'2026-06-02',days:30,leaveDays:0,expiry:'2026-07-02',note:''},
-    {id:'pay_18',studentId:'stu_18',amount:5500,date:'2026-05-28',days:31,leaveDays:0,expiry:'2026-06-28',note:''},
-    {id:'pay_19',studentId:'stu_19',amount:5500,date:'2026-06-14',days:30,leaveDays:0,expiry:'2026-07-14',note:''},
-    {id:'pay_20',studentId:'stu_20',amount:5500,date:'2026-06-06',days:30,leaveDays:0,expiry:'2026-07-06',note:''},
-    {id:'pay_21',studentId:'stu_21',amount:10000,date:'2026-06-14',days:30,leaveDays:0,expiry:'2026-07-14',note:''},
-    {id:'pay_22',studentId:'stu_22',amount:3300,date:'2026-06-07',days:14,leaveDays:0,expiry:'2026-06-21',note:''},
-    {id:'pay_23',studentId:'stu_23',amount:5000,date:'2026-06-18',days:30,leaveDays:0,expiry:'2026-07-18',note:''},
-    {id:'pay_24',studentId:'stu_24',amount:2500,date:'2026-06-17',days:35,leaveDays:0,expiry:'2026-07-22',note:''},
-    {id:'pay_25',studentId:'stu_25',amount:2500,date:'2026-05-21',days:31,leaveDays:0,expiry:'2026-06-21',note:''},
-    {id:'pay_26',studentId:'stu_26',amount:2000,date:'2026-06-20',days:30,leaveDays:0,expiry:'2026-07-20',note:''},
-    {id:'pay_27',studentId:'stu_27',amount:2000,date:'2026-06-11',days:30,leaveDays:0,expiry:'2026-07-11',note:''},
-    {id:'pay_28',studentId:'stu_28',amount:2500,date:'2026-06-03',days:30,leaveDays:0,expiry:'2026-07-03',note:''}
+    {id:"pay_1",studentId:"stu_1",amount:2000,date:"2026-11-01",days:30,leaveDays:0,expiry:"2026-12-01",note:""},
+    {id:"pay_2",studentId:"stu_2",amount:2000,date:"2026-11-01",days:30,leaveDays:0,expiry:"2026-12-01",note:""},
+    {id:"pay_3",studentId:"stu_3",amount:2000,date:"2026-11-19",days:57,leaveDays:0,expiry:"2027-01-15",note:"跨年到期"},
+    {id:"pay_4",studentId:"stu_4",amount:1000,date:"2026-10-27",days:31,leaveDays:0,expiry:"2026-11-27",note:""},
+    {id:"pay_5",studentId:"stu_5",amount:1000,date:"2026-10-27",days:31,leaveDays:0,expiry:"2026-11-27",note:""},
+    {id:"pay_6",studentId:"stu_6",amount:1000,date:"2026-11-01",days:30,leaveDays:0,expiry:"2026-12-01",note:""},
+    {id:"pay_7",studentId:"stu_7",amount:2800,date:"2026-10-22",days:31,leaveDays:0,expiry:"2026-11-22",note:""},
+    {id:"pay_8",studentId:"stu_8",amount:2000,date:"2026-11-10",days:30,leaveDays:0,expiry:"2026-12-10",note:""},
+    {id:"pay_9",studentId:"stu_9",amount:1500,date:"2026-11-05",days:30,leaveDays:0,expiry:"2026-12-05",note:""},
+    {id:"pay_10",studentId:"stu_10",amount:2000,date:"2026-10-22",days:31,leaveDays:0,expiry:"2026-11-22",note:""},
+    {id:"pay_11",studentId:"stu_11",amount:2000,date:"2026-11-15",days:30,leaveDays:0,expiry:"2026-12-15",note:""},
+    {id:"pay_12",studentId:"stu_12",amount:3000,date:"2026-10-28",days:31,leaveDays:0,expiry:"2026-11-28",note:""},
+    {id:"pay_13",studentId:"stu_13",amount:4000,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:"仅写文化日期，作总体日期"},
+    {id:"pay_14",studentId:"stu_14",amount:3000,date:"2026-10-30",days:31,leaveDays:0,expiry:"2026-11-30",note:""},
+    {id:"pay_15",studentId:"stu_15",amount:2000,date:"2026-11-03",days:30,leaveDays:0,expiry:"2026-12-03",note:"仅写文化日期，作总体日期"},
+    {id:"pay_16",studentId:"stu_16",amount:3500,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:"仅写文化日期，作总体日期"},
+    {id:"pay_17",studentId:"stu_17",amount:4000,date:"2026-10-27",days:31,leaveDays:0,expiry:"2026-11-27",note:""},
+    {id:"pay_18",studentId:"stu_18",amount:4500,date:"2026-11-19",days:30,leaveDays:0,expiry:"2026-12-19",note:"仅写文化日期，作总体日期"},
+    {id:"pay_19",studentId:"stu_19",amount:3000,date:"2026-11-15",days:30,leaveDays:0,expiry:"2026-12-15",note:""},
+    {id:"pay_20",studentId:"stu_20",amount:5500,date:"2026-11-18",days:30,leaveDays:0,expiry:"2026-12-18",note:""},
+    {id:"pay_21",studentId:"stu_21",amount:5500,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:"原写6500=训练5500+文化1000，请核对"},
+    {id:"pay_22",studentId:"stu_22",amount:5500,date:"2026-10-26",days:31,leaveDays:0,expiry:"2026-11-26",note:""},
+    {id:"pay_23",studentId:"stu_23",amount:15000,date:"",days:0,leaveDays:0,expiry:"2027-01-05",note:"文化+训练合计15000，仅知到期1.05，起始日未提供"},
+    {id:"pay_24",studentId:"stu_24",amount:3500,date:"2026-10-28",days:31,leaveDays:0,expiry:"2026-11-28",note:""},
+    {id:"pay_25",studentId:"stu_25",amount:3000,date:"2026-11-08",days:30,leaveDays:0,expiry:"2026-12-08",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对"},
+    {id:"pay_26",studentId:"stu_26",amount:4000,date:"2026-10-16",days:31,leaveDays:0,expiry:"2026-11-16",note:""},
+    {id:"pay_27",studentId:"stu_27",amount:3000,date:"2026-10-06",days:31,leaveDays:0,expiry:"2026-11-06",note:""},
+    {id:"pay_28",studentId:"stu_28",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
+    {id:"pay_29",studentId:"stu_29",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
+    {id:"pay_30",studentId:"stu_30",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
+    {id:"pay_31",studentId:"stu_31",amount:4500,date:"2026-10-25",days:31,leaveDays:0,expiry:"2026-11-25",note:""},
+    {id:"pay_32",studentId:"stu_32",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
+    {id:"pay_33",studentId:"stu_33",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
+    {id:"pay_34",studentId:"stu_34",amount:4000,date:"2026-10-24",days:1,leaveDays:0,expiry:"2026-10-25",note:"原写10.24-10.25仅1天，请核对"},
+    {id:"pay_35",studentId:"stu_35",amount:5500,date:"2026-11-14",days:30,leaveDays:0,expiry:"2026-12-14",note:""},
+    {id:"pay_36",studentId:"stu_36",amount:0,date:"",days:0,leaveDays:0,expiry:"2027-05-13",note:"文化课全部包含，体考结束；金额未提供"}
   ];
+  culturePayments = [
+    {id:"cp_1",studentId:"stu_12",subject:"文化课",amount:1000,date:"2026-11-02",days:30,leaveDays:0,expiry:"2026-12-02",note:""},
+    {id:"cp_2",studentId:"stu_13",subject:"文化课",amount:1000,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:""},
+    {id:"cp_3",studentId:"stu_14",subject:"文化课",amount:800,date:"2026-11-02",days:30,leaveDays:0,expiry:"2026-12-02",note:""},
+    {id:"cp_4",studentId:"stu_15",subject:"文化课",amount:1000,date:"2026-11-03",days:30,leaveDays:0,expiry:"2026-12-03",note:""},
+    {id:"cp_5",studentId:"stu_16",subject:"文化课",amount:1000,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:""},
+    {id:"cp_6",studentId:"stu_17",subject:"文化课",amount:1000,date:"2026-11-02",days:30,leaveDays:0,expiry:"2026-12-02",note:""},
+    {id:"cp_7",studentId:"stu_18",subject:"文化课",amount:1000,date:"2026-11-19",days:30,leaveDays:0,expiry:"2026-12-19",note:""},
+    {id:"cp_8",studentId:"stu_21",subject:"文化课",amount:1000,date:"2026-11-09",days:30,leaveDays:0,expiry:"2026-12-09",note:""},
+    {id:"cp_9",studentId:"stu_24",subject:"文化课",amount:1000,date:"2026-11-02",days:30,leaveDays:0,expiry:"2026-12-02",note:""},
+    {id:"cp_10",studentId:"stu_25",subject:"文化课",amount:1000,date:"2026-11-08",days:30,leaveDays:0,expiry:"2026-12-08",note:""},
+    {id:"cp_11",studentId:"stu_28",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
+    {id:"cp_12",studentId:"stu_29",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
+    {id:"cp_13",studentId:"stu_30",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
+    {id:"cp_14",studentId:"stu_31",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
+    {id:"cp_15",studentId:"stu_32",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
+    {id:"cp_16",studentId:"stu_33",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""}
+  ];
+  leaves = [];
   saveData();
 }
 
