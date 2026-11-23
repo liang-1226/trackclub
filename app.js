@@ -1,5 +1,5 @@
 /* 精准田径俱乐部 - 核心逻辑 */
-const STORAGE_KEY = 'trackclub_data_v7';
+const STORAGE_KEY = 'trackclub_data_v8';
 let students = [], payments = [], culturePayments = [], leaves = [];
 let editingStudentId = null, editingPaymentId = null, editingCultureId = null;
 let studentFilter = 'all', studentPage = 1, STUDENTS_PER_PAGE = 15;
@@ -76,7 +76,7 @@ function initDemoData() {
     {id:"stu_14",name:"王鑫哲",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-30"},
     {id:"stu_15",name:"阿乙思太",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-03"},
     {id:"stu_16",name:"邓铭哲",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-09"},
-    {id:"stu_17",name:"王浦涵",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-27"},
+    {id:"stu_17",name:"王浦瀚",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-27"},
     {id:"stu_18",name:"于笑唯",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-19"},
     {id:"stu_19",name:"肖培宇",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-15"},
     {id:"stu_20",name:"张贻硕",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-18"},
@@ -95,7 +95,7 @@ function initDemoData() {
     {id:"stu_33",name:"毕鹏程",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
     {id:"stu_34",name:"韩雨琪",phone:"",event:"田径训练",note:"原写10.24-10.25仅1天，请核对",active:true,createdAt:"2026-10-24"},
     {id:"stu_35",name:"张瑞",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-14"},
-    {id:"stu_36",name:"郑允棋",phone:"",event:"田径训练",note:"文化课全部包含，体考结束；金额未提供",active:true,createdAt:""}
+    {id:"stu_36",name:"郑允祺",phone:"",event:"田径训练",note:"文化课全部包含，体考结束；金额未提供",active:true,createdAt:""}
   ];
   payments = [
     {id:"pay_1",studentId:"stu_1",amount:2000,date:"2026-11-01",days:30,leaveDays:0,expiry:"2026-12-01",note:""},
