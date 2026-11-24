@@ -9,7 +9,7 @@ let leaveFilter = 'all', leavePage = 1, LEAVES_PER_PAGE = 15;
 
 // ── 数据存储 ──
 // 数据版本号：修改内置名单时必须同步递增，旧设备数据会被强制丢弃重建
-const DATA_VERSION = 20261125;
+const DATA_VERSION = 20261126;
 
 function loadData() {
   try {
@@ -108,7 +108,7 @@ function initDemoData() {
     {id:"stu_35",name:"张瑞",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-14"},
     {id:"stu_36",name:"郑允祺",phone:"",event:"田径训练",note:"文化课全部包含，体考结束；金额未提供",active:true,createdAt:""},
     {id:"stu_37",name:"张圆晟",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-05-20"},
-    {id:"stu_38",name:"白云升",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-06-01"},
+    {id:"stu_38",name:"白云升",phone:"",event:"田径训练",note:"复课；含训练费+住宿费，不含餐费",active:true,createdAt:"2026-06-01"},
     {id:"stu_39",name:"李佳泽",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-06-16"},
     {id:"stu_40",name:"范承昊",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-06-12"},
     {id:"stu_41",name:"赵森",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-05-27"},
@@ -195,7 +195,9 @@ function initDemoData() {
     {id:"stu_122",name:"冯俊轩",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-07-29"},
     {id:"stu_123",name:"潘昶润",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-07-29"},
     {id:"stu_124",name:"曲振华",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-07-29"},
-    {id:"stu_125",name:"王正哲",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-07-29"}
+    {id:"stu_125",name:"王正哲",phone:"",event:"田径训练",note:"历史学员（已离队）",active:false,createdAt:"2026-07-29"},
+    {id:"stu_126",name:"程帅",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-23"},
+    {id:"stu_127",name:"李金峰",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-22"}
   ];
   payments = [
     {id:"pay_1",studentId:"stu_1",amount:2000,date:"2026-11-01",days:30,leaveDays:0,expiry:"2026-12-01",note:""},
@@ -320,7 +322,10 @@ function initDemoData() {
     {id:"pay_120",studentId:"stu_122",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
     {id:"pay_121",studentId:"stu_123",amount:4500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
     {id:"pay_122",studentId:"stu_124",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
-    {id:"pay_123",studentId:"stu_125",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""}
+    {id:"pay_123",studentId:"stu_125",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
+    {id:"pay_124",studentId:"stu_38",amount:5500,date:"2026-11-23",days:30,leaveDays:0,expiry:"2026-12-23",note:"复课；含训练费+住宿费，不含餐费（金额待确认）"},
+    {id:"pay_125",studentId:"stu_126",amount:5500,date:"2026-11-23",days:30,leaveDays:0,expiry:"2026-12-23",note:""},
+    {id:"pay_126",studentId:"stu_127",amount:5500,date:"2026-11-22",days:30,leaveDays:0,expiry:"2026-12-22",note:""}
   ];
   culturePayments = [
     {id:"cp_1",studentId:"stu_12",subject:"文化课",amount:1000,date:"2026-11-02",days:30,leaveDays:0,expiry:"2026-12-02",note:""},
