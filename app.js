@@ -8,43 +8,33 @@ let cultureFilter = 'all', culturePage = 1, CULTURE_PER_PAGE = 15;
 let leaveFilter = 'all', leavePage = 1, LEAVES_PER_PAGE = 15;
 
 // ── 数据存储 ──
+// 数据版本号：修改内置名单时必须同步递增，旧设备数据会被强制丢弃重建
+const DATA_VERSION = 20261124;
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) { const d = JSON.parse(raw); students = d.students || []; payments = d.payments || []; culturePayments = d.culturePayments || []; leaves = d.leaves || [];
-      // 迁移：给没有 active 字段的学员补上
-      students.forEach(function(s) { if (s.active === undefined) s.active = true; });
-      // 合并新增学员
-      mergeNewStudents();
-      // 合并批量缴费
-      mergePayments();
-      return; }
-  } catch(e) {}
-  // 从旧版迁移数据
-  var migrated = false;
-  try {
-    var oldRaw = localStorage.getItem('trackclub_data_v5');
-    if (oldRaw) {
-      var oldD = JSON.parse(oldRaw);
-      students = oldD.students || [];
-      payments = oldD.payments || [];
-      culturePayments = oldD.culturePayments || [];
-      leaves = [];
-      students.forEach(function(s) { if (s.active === undefined) s.active = true; });
-      migrated = true;
+    if (raw) {
+      const d = JSON.parse(raw);
+      // 强版本校验：版本不匹配 → 整份丢弃，用内置最新名单重建
+      if (d.dataVersion === DATA_VERSION && d.students && d.students.length) {
+        students = d.students || [];
+        payments = d.payments || [];
+        culturePayments = d.culturePayments || [];
+        leaves = d.leaves || [];
+        students.forEach(function(s) { if (s.active === undefined) s.active = true; });
+        return;
+      }
+      // 版本不符，清掉旧数据继续往下走重建
+      localStorage.removeItem(STORAGE_KEY);
     }
-  } catch(e2) {}
-  if (!migrated) {
-    // 清除旧版本数据
-    localStorage.removeItem('trackclub_data_v5');
-    localStorage.removeItem('trackclub_data_v4');
-    localStorage.removeItem('trackclub_data_v3');
-    localStorage.removeItem('trackclub_data_v2');
-    initDemoData();
-  } else {
-    mergeNewStudents();
-    mergePayments();
-  }
+  } catch(e) {}
+  // 清理所有历史版本残留键
+  ['trackclub_data_v9','trackclub_data_v8','trackclub_data_v7','trackclub_data_v6',
+   'trackclub_data_v5','trackclub_data_v4','trackclub_data_v3','trackclub_data_v2'].forEach(function(k) {
+    try { localStorage.removeItem(k); } catch(e) {}
+  });
+  initDemoData();
 }
 
 // 合并新增学员（已有数据时自动补充新学员）
@@ -158,7 +148,7 @@ function initDemoData() {
 }
 
 function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({students, payments, culturePayments, leaves}));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({dataVersion: DATA_VERSION, students, payments, culturePayments, leaves}));
 }
 
 function today() {
