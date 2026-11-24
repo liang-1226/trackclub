@@ -70,17 +70,19 @@ function mergeSeedLeaves() {
   if (added) saveData();
 }
 
-// 数据修正补丁：把指定缴费记录改成内置权威值（按 id 精确匹配，只改金额/备注）
+// 数据修正补丁：把指定缴费记录改成内置权威值（按 id 精确匹配，支持 金额/日期/天数/到期/备注）
 function applyDataFixes() {
   var fixes = {
-    'pay_124': {amount:4500, note:'复课；含训练费+住宿费，不含餐费'}
+    'pay_124': {amount:4500, note:'复课；含训练费+住宿费，不含餐费'},
+    'pay_27':  {date:'2026-11-06', days:30, expiry:'2026-12-06'}
   };
   var changed = false;
   payments.forEach(function(p) {
     var f = fixes[p.id];
     if (!f) return;
-    if (p.amount !== f.amount) { p.amount = f.amount; changed = true; }
-    if (f.note !== undefined && p.note !== f.note) { p.note = f.note; changed = true; }
+    Object.keys(f).forEach(function(k) {
+      if (p[k] !== f[k]) { p[k] = f[k]; changed = true; }
+    });
   });
   if (changed) saveData();
 }
@@ -113,7 +115,7 @@ function initDemoData() {
     {id:"stu_24",name:"周泽勋",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-28"},
     {id:"stu_25",name:"苏星宇",phone:"",event:"田径训练",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对",active:true,createdAt:"2026-11-08"},
     {id:"stu_26",name:"黄家豪",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-16"},
-    {id:"stu_27",name:"张嘉桐",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-10-06"},
+    {id:"stu_27",name:"张嘉桐",phone:"",event:"田径训练",note:"",active:true,createdAt:"2026-11-06"},
     {id:"stu_28",name:"李铭浩",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
     {id:"stu_29",name:"赵博楠",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
     {id:"stu_30",name:"马庆野",phone:"",event:"田径训练",note:"仅写文化日期，作总体日期",active:true,createdAt:"2026-11-16"},
@@ -242,7 +244,7 @@ function initDemoData() {
     {id:"pay_24",studentId:"stu_24",amount:3500,date:"2026-10-28",days:31,leaveDays:0,expiry:"2026-11-28",note:""},
     {id:"pay_25",studentId:"stu_25",amount:3000,date:"2026-11-08",days:30,leaveDays:0,expiry:"2026-12-08",note:"原写3000+1000未标文化，按训练3000+文化1000，请核对"},
     {id:"pay_26",studentId:"stu_26",amount:4000,date:"2026-10-16",days:31,leaveDays:0,expiry:"2026-11-16",note:""},
-    {id:"pay_27",studentId:"stu_27",amount:3000,date:"2026-10-06",days:31,leaveDays:0,expiry:"2026-11-06",note:""},
+    {id:"pay_27",studentId:"stu_27",amount:3000,date:"2026-11-06",days:30,leaveDays:0,expiry:"2026-12-06",note:""},
     {id:"pay_28",studentId:"stu_28",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
     {id:"pay_29",studentId:"stu_29",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
     {id:"pay_30",studentId:"stu_30",amount:4500,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:"仅写文化日期，作总体日期"},
