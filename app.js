@@ -24,6 +24,7 @@ function loadData() {
         leaves = d.leaves || [];
         students.forEach(function(s) { if (s.active === undefined) s.active = true; });
         mergeSeedLeaves();
+        applyDataFixes();
         return;
       }
       // 版本不符，清掉旧数据继续往下走重建
@@ -67,6 +68,21 @@ function mergeSeedLeaves() {
     added = true;
   });
   if (added) saveData();
+}
+
+// 数据修正补丁：把指定缴费记录改成内置权威值（按 id 精确匹配，只改金额/备注）
+function applyDataFixes() {
+  var fixes = {
+    'pay_124': {amount:4500, note:'复课；含训练费+住宿费，不含餐费'}
+  };
+  var changed = false;
+  payments.forEach(function(p) {
+    var f = fixes[p.id];
+    if (!f) return;
+    if (p.amount !== f.amount) { p.amount = f.amount; changed = true; }
+    if (f.note !== undefined && p.note !== f.note) { p.note = f.note; changed = true; }
+  });
+  if (changed) saveData();
 }
 
 function initDemoData() {
@@ -323,7 +339,7 @@ function initDemoData() {
     {id:"pay_121",studentId:"stu_123",amount:4500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
     {id:"pay_122",studentId:"stu_124",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
     {id:"pay_123",studentId:"stu_125",amount:5500,date:"2026-07-29",days:30,leaveDays:0,expiry:"2026-08-28",note:""},
-    {id:"pay_124",studentId:"stu_38",amount:5500,date:"2026-11-23",days:30,leaveDays:0,expiry:"2026-12-23",note:"复课；含训练费+住宿费，不含餐费（金额待确认）"},
+    {id:"pay_124",studentId:"stu_38",amount:4500,date:"2026-11-23",days:30,leaveDays:0,expiry:"2026-12-23",note:"复课；含训练费+住宿费，不含餐费"},
     {id:"pay_125",studentId:"stu_126",amount:5500,date:"2026-11-23",days:30,leaveDays:0,expiry:"2026-12-23",note:""},
     {id:"pay_126",studentId:"stu_127",amount:5500,date:"2026-11-22",days:30,leaveDays:0,expiry:"2026-12-22",note:""}
   ];
