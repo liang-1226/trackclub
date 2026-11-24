@@ -23,6 +23,7 @@ function loadData() {
         culturePayments = d.culturePayments || [];
         leaves = d.leaves || [];
         students.forEach(function(s) { if (s.active === undefined) s.active = true; });
+        mergeSeedLeaves();
         return;
       }
       // 版本不符，清掉旧数据继续往下走重建
@@ -46,6 +47,26 @@ function mergeNewStudents() {
 
 function mergePayments() {
   // 缴费已内置于 initDemoData，无需合并旧缴费
+}
+
+// 把内置种子请假记录补录到设备已有数据中（按 id 去重，不覆盖用户操作）
+function mergeSeedLeaves() {
+  var seeds = [
+    {id:"leave_seed_20261124_1",studentId:"stu_20",leaveDate:"2026-11-24",returnDate:null,totalDays:0,effectiveDays:0}
+  ];
+  var added = false;
+  seeds.forEach(function(sd) {
+    var exists = leaves.some(function(l) { return l.id === sd.id; });
+    if (exists) return;
+    // 该学员若已有一条未回营的离营记录，则不重复添加
+    var active = leaves.some(function(l) { return l.studentId === sd.studentId && !l.returnDate; });
+    if (active) return;
+    // 学员必须存在于当前名单
+    if (!students.some(function(s) { return s.id === sd.studentId; })) return;
+    leaves.push({id:sd.id, studentId:sd.studentId, leaveDate:sd.leaveDate, returnDate:sd.returnDate, totalDays:sd.totalDays, effectiveDays:sd.effectiveDays});
+    added = true;
+  });
+  if (added) saveData();
 }
 
 function initDemoData() {
@@ -319,7 +340,9 @@ function initDemoData() {
     {id:"cp_15",studentId:"stu_32",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""},
     {id:"cp_16",studentId:"stu_33",subject:"文化课",amount:1000,date:"2026-11-16",days:30,leaveDays:0,expiry:"2026-12-16",note:""}
   ];
-  leaves = [];
+  leaves = [
+    {id:"leave_seed_20261124_1",studentId:"stu_20",leaveDate:"2026-11-24",returnDate:null,totalDays:0,effectiveDays:0}
+  ];
   saveData();
 }
 
